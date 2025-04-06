@@ -143,15 +143,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Real-time location:", { latitude, longitude });
 
                 try {
-                    // Update the user's location in Firestore
-                    const userDocRef = doc(db, "users", user.uid);
-                    await updateDoc(userDocRef, {
-                        location: {
-                            latitude: latitude,
-                            longitude: longitude,
-                            timestamp: new Date().toISOString(),
-                        },
-                    });
+                    // Fetch the exact location name using the Nominatim API
+                    const geocodingUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+                    fetch(geocodingUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(async (data) => {
+                            const locationName = data.display_name || "Location not found";
+
+                            // Update Firestore with the location name
+                            const userDocRef = doc(db, "users", user.uid);
+                            await updateDoc(userDocRef, {
+                                location: {
+                                    latitude: latitude,
+                                    longitude: longitude,
+                                    name: locationName,
+                                    timestamp: new Date().toISOString(),
+                                },
+                            });
+
+                            console.log("Location name updated in Firestore:", locationName);
+                        })
+                        .catch(error => {
+                            console.error("Error fetching location name:", error);
+                        });
 
                     console.log("Real-time location updated in Firestore.");
                 } catch (error) {
@@ -385,16 +404,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleLocationError(error) {
         switch (error.code) {
             case error.PERMISSION_DENIED:
-                locationElement.textContent = "User denied the request for Geolocation.";
+                console.error("User denied the request for Geolocation.");
+                locationElement.textContent = "Location access denied. Please enable location permissions.";
                 break;
             case error.POSITION_UNAVAILABLE:
-                locationElement.textContent = "Location information is unavailable.";
+                console.error("Location information is unavailable.");
+                locationElement.textContent = "Unable to determine location. Please try again later.";
                 break;
             case error.TIMEOUT:
-                locationElement.textContent = "The request to get user location timed out.";
+                console.error("The request to get user location timed out.");
+                locationElement.textContent = "Location request timed out. Please ensure you have a stable connection.";
                 break;
-            case error.UNKNOWN_ERROR:
-                locationElement.textContent = "An unknown error occurred.";
+            default:
+                console.error("An unknown error occurred.", error);
+                locationElement.textContent = "An unknown error occurred while fetching location.";
                 break;
         }
     }
@@ -516,15 +539,34 @@ async function storeLocation(user) {
                 console.log("Real-time location:", { latitude, longitude });
 
                 try {
-                    // Update the user's location in Firestore
-                    const userDocRef = doc(db, "users", user.uid);
-                    await updateDoc(userDocRef, {
-                        location: {
-                            latitude: latitude,
-                            longitude: longitude,
-                            timestamp: new Date().toISOString(),
-                        },
-                    });
+                    // Fetch the exact location name using the Nominatim API
+                    const geocodingUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+                    fetch(geocodingUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(async (data) => {
+                            const locationName = data.display_name || "Location not found";
+
+                            // Update Firestore with the location name
+                            const userDocRef = doc(db, "users", user.uid);
+                            await updateDoc(userDocRef, {
+                                location: {
+                                    latitude: latitude,
+                                    longitude: longitude,
+                                    name: locationName,
+                                    timestamp: new Date().toISOString(),
+                                },
+                            });
+
+                            console.log("Location name updated in Firestore:", locationName);
+                        })
+                        .catch(error => {
+                            console.error("Error fetching location name:", error);
+                        });
 
                     console.log("Real-time location updated in Firestore.");
                 } catch (error) {
