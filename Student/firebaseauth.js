@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
                     // Redirect to Student dashboard
                     setTimeout(() => {
-                        window.location.href = "./student/student-dashboard.html";
+                        window.location.href = "./student-dashboard.html";
                     }, 2000);
                 } else {
                     console.error("No user data found in Firestore for UID:", user.uid);
@@ -165,4 +165,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-

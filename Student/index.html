@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login and Register</title>
+    <link rel="stylesheet" href="style.css"> <!-- Link to external CSS -->
+    <!-- Firebase Authentication Script -->
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <script type="module" src="firebaseauth.js"></script>
+</head>
+<body>
+    <div class="form-container" id="form-container">
+        <!-- Login Form -->
+        <div id="login-form-container">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <input type="email" id="lEmail" placeholder="Email" required />
+                <input type="password" id="lPassword" placeholder="Password" required />
+                <button id="submitLogin">Login</button>
+                <div id="loginMessage" style="display: none;"></div>
+            </form>
+            <div class="google-icon">
+                <img src="../img/google.png" alt="Google Icon">
+            </div>
+            <div class="toggle-link">
+                <p>Don't have an account? <a href="register.html" id="show-register">Register</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
