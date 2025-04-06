@@ -1,13 +1,193 @@
 /* General body styling */
 body {
-    font-family: Arial, sans-serif;
     margin: 0;
-    padding: 0;
+    font-family: Arial, sans-serif;
+    padding-top: 80px;
+    padding-left: 40px; 
     display: flex;
     justify-content: center;
+    align-items: center;/* Add space at the top to prevent scrolling overlap */
+}
+
+/* Main header styling */
+.main-header {
+    display: flex;
+    justify-content: space-between; /* Space between left and right sections */
     align-items: center;
-    height: 100vh;
-    background-color: #f4f4f4;
+    background-color: #007BFF; /* Add a background color for visibility */
+    padding: 10px 20px; /* Minimize padding for a smaller header */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: 60px; /* Reduce the height of the header */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a shadow below the header */
+}
+
+/* Right-side header navigation */
+.right-header-nav {
+    display: flex;
+    align-items: left;
+    gap: 20px; /* Space between notification and profile icons */
+}
+
+.icon-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 2px solid white; /* Border-only style */
+    border-radius: 50%; /* Circular icons */
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.icon-link img {
+    width: 30px;
+    height: 30px;
+}
+
+.icon-link:hover {
+    border-color: #0056b3; /* Change border color on hover */
+}
+
+/* Notification Pop-Up Styling */
+.notification-popup {
+    position: absolute;
+    top: 90px; /* Position below the header */
+    right: 110px; /* Align to the right side */
+    width: 500px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+
+.notification-popup.hidden {
+    display: none; /* Hide the pop-up by default */
+}
+
+.notification-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.notification-item:last-child {
+    border-bottom: none; /* Remove border for the last item */
+}
+
+.notification-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.notification-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.notification-name {
+    font-weight: bold;
+    margin: 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.notification-description {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+}
+
+/* Sidebar styling */
+.navbar {
+    position: fixed;
+    top: 60px; /* Position it below the header */
+    left: 0;
+    width: 200px; /* Fixed width for the sidebar */
+    height: calc(100vh - 60px); /* Full height minus the header height */
+    background-color: #007BFF;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Add a subtle shadow on the right */
+    z-index: 900; /* Ensure it is below the header */
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 15px 10px; /* Adjust padding for better spacing */
+    border-radius: 4px;
+}
+
+.navbar a:hover {
+    background-color: #0056b3;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+    width: 100%; /* Ensure the item spans the full width of the navbar */
+    padding: 10px 0; /* Add vertical padding for better spacing */
+    position: relative;
+    box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.nav-item img {
+    width: 30px; /* Smaller icon size */
+    height: 30px;
+    margin-right: 15px; /* Add space between the icon and text */
+}
+
+.nav-item span {
+    font-size: 16px; /* Adjust text size */
+    color: white;
+}
+
+.nav-item:hover {
+    background-color: #0056b3; /* Change background color on hover */
+    width: 100%; /* Ensure the hover background covers the full width */
+    border-radius: 4px; /* Optional: Add rounded corners */
+}
+
+.nav-item:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.3); /* Light line between items */
+}
+
+/* Burger button styling */
+.burger-button {
+    display: none; /* Hide by default */
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    font-size: 24px;
+    padding: 10px 15px;
+    cursor: pointer;
+    z-index: 900; /* Place it behind the navbar */
+    border-radius: 4px;
 }
 
 /* Form container styling */
@@ -17,6 +197,7 @@ body {
     background: #fff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
+    
 }
 
 .form-container h2 {
@@ -95,4 +276,34 @@ body {
     border: 1px solid #f5c6cb;
     border-radius: 4px;
     text-align: center;
+}
+
+/* Role Selection Section */
+.role-selection {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.role {
+    text-align: center;
+}
+
+.role img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 10px;
+    transition: transform 0.3s ease;
+}
+
+.role img:hover {
+    transform: scale(1.1); /* Slight zoom effect on hover */
+}
+
+.role p {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
 }

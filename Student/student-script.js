@@ -1,15 +1,17 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getFirestore, getDoc, doc, updateDoc, collection, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDlb3OuUZCmKKXfCZ0HN-lTS7Px3LTpEnY",
-    authDomain: "track-io-c06e4.firebaseapp.com",
-    projectId: "track-io-c06e4",
-    storageBucket: "track-io-c06e4.appspot.com",
-    messagingSenderId: "298561401488",
-    appId: "1:298561401488:web:c46ac57407eeddda125e15"
+    apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
+    authDomain: "trackio-f5b07.firebaseapp.com",
+    projectId: "trackio-f5b07",
+    storageBucket: "trackio-f5b07.firebasestorage.app",
+    messagingSenderId: "1083789426923",
+    appId: "1:1083789426923:web:c372749a28e84ff9cd7eae",
+    measurementId: "G-DSPVFG2CYW"
+    
 };
 
 // Initialize Firebase
@@ -141,15 +143,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Real-time location:", { latitude, longitude });
 
                 try {
-                    // Update the user's location in Firestore
-                    const userDocRef = doc(db, "users", user.uid);
-                    await updateDoc(userDocRef, {
-                        location: {
-                            latitude: latitude,
-                            longitude: longitude,
-                            timestamp: new Date().toISOString(),
-                        },
-                    });
+                    // Fetch the exact location name using the Nominatim API
+                    const geocodingUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+                    fetch(geocodingUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(async (data) => {
+                            const locationName = data.display_name || "Location not found";
+
+                            // Update Firestore with the location name
+                            const userDocRef = doc(db, "users", user.uid);
+                            await updateDoc(userDocRef, {
+                                location: {
+                                    latitude: latitude,
+                                    longitude: longitude,
+                                    name: locationName,
+                                    timestamp: new Date().toISOString(),
+                                },
+                            });
+
+                            console.log("Location name updated in Firestore:", locationName);
+                        })
+                        .catch(error => {
+                            console.error("Error fetching location name:", error);
+                        });
 
                     console.log("Real-time location updated in Firestore.");
                 } catch (error) {
@@ -193,9 +214,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Event listener for Check In/Check Out button
+    // Function to store check-in and check-out data in Firestore
+    async function storeCheckInOutData(user, checkInTime, checkOutTime) {
+        if (!user || !user.uid) {
+            console.error("No authenticated user found.");
+            return;
+        }
+
+        try {
+            const userDocRef = doc(db, "users", user.uid);
+            await updateDoc(userDocRef, {
+                checkInOutData: arrayUnion({
+                    checkInTime: checkInTime,
+                    checkOutTime: checkOutTime,
+                    date: new Date().toISOString() // Add the current date
+                }),
+            });
+
+            console.log("Check-in and check-out data stored successfully in Firestore.");
+        } catch (error) {
+            console.error("Error storing check-in and check-out data in Firestore:", error);
+        }
+    }
+
+    // Modify the Check In/Check Out button event listener
     checkInButton.addEventListener('click', () => {
-        console.log('Button clicked'); // Debugging log
         if (!isCheckedIn) {
             // Check In
             const currentTime = getCurrentDateTime();
@@ -215,13 +258,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentTime = getCurrentDateTime();
             endTimeInput.value = currentTime;
 
-            // Calculate hours worked and update remaining hours
-            const startTime = startTimeInput.value.split(' ')[1]; // Extract time from Start Time
-            const endTime = endTimeInput.value.split(' ')[1]; // Extract time from End Time
-            const hoursWorked = calculateHours(startTime, endTime);
-
-            remainingHours -= hoursWorked;
-            remainingHoursElement.textContent = Math.max(0, remainingHours).toFixed(2);
+            // Store check-in and check-out data in Firestore
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    storeCheckInOutData(user, startTimeInput.value, endTimeInput.value);
+                }
+            });
 
             // Reset for next Check In
             checkInButton.textContent = 'Check In';
@@ -235,6 +277,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+    });
+
+    // Add a reset button functionality
+    const resetButton = document.createElement('button');
+    resetButton.textContent = 'Reset';
+    resetButton.id = 'reset-button';
+    resetButton.style.marginTop = '10px';
+
+    // Append the reset button to the check-in container
+    const checkInContainer = document.querySelector('.check-in-container');
+    checkInContainer.appendChild(resetButton);
+
+    // Function to store reset data in Firestore with a new timestamp
+    async function storeResetData(user) {
+        if (!user || !user.uid) {
+            console.error("No authenticated user found.");
+            return;
+        }
+
+        const resetTimestamp = new Date().toISOString(); // Get current timestamp
+
+        try {
+            const userDocRef = doc(db, "users", user.uid);
+
+            // Add a new reset entry with the timestamp
+            await updateDoc(userDocRef, {
+                resets: arrayUnion({
+                    timestamp: resetTimestamp
+                })
+            });
+
+            console.log("Reset data stored successfully in Firestore with timestamp:", resetTimestamp);
+        } catch (error) {
+            console.error("Error storing reset data in Firestore:", error);
+        }
+    }
+
+    // Add event listener to reset button
+    resetButton.addEventListener('click', () => {
+        startTimeInput.value = "";
+        endTimeInput.value = "";
+
+        // Store reset data in Firestore
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                storeResetData(user);
+            }
+        });
     });
 
     // Geolocation functionality
@@ -314,16 +404,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleLocationError(error) {
         switch (error.code) {
             case error.PERMISSION_DENIED:
-                locationElement.textContent = "User denied the request for Geolocation.";
+                console.error("User denied the request for Geolocation.");
+                locationElement.textContent = "Location access denied. Please enable location permissions.";
                 break;
             case error.POSITION_UNAVAILABLE:
-                locationElement.textContent = "Location information is unavailable.";
+                console.error("Location information is unavailable.");
+                locationElement.textContent = "Unable to determine location. Please try again later.";
                 break;
             case error.TIMEOUT:
-                locationElement.textContent = "The request to get user location timed out.";
+                console.error("The request to get user location timed out.");
+                locationElement.textContent = "Location request timed out. Please ensure you have a stable connection.";
                 break;
-            case error.UNKNOWN_ERROR:
-                locationElement.textContent = "An unknown error occurred.";
+            default:
+                console.error("An unknown error occurred.", error);
+                locationElement.textContent = "An unknown error occurred while fetching location.";
                 break;
         }
     }
@@ -338,20 +432,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         locationElement.textContent = "Geolocation is not supported by this browser.";
     }
-
-    // Function to fetch and store the user's location
-    async function storeLocation() {
-        if (!navigator.geolocation) {
-            console.error("Geolocation is not supported by this browser.");
-            return;
-        }
-
-        // Get the current user
-        const user = auth.currentUser;
-        if (!user) {
-            console.error("No authenticated user found.");
-            return;
-        }
+// Enhanced error handling and logging for fetching user data
+onAuthStateChanged(auth, async (user) => {
+    if (user && user.uid) {
+        console.log("User is authenticated:", user);
 
         try {
             // Fetch the user's details from Firestore
@@ -359,40 +443,78 @@ document.addEventListener('DOMContentLoaded', () => {
             const userDoc = await getDoc(userDocRef);
 
             if (!userDoc.exists()) {
-                console.error("User document does not exist in Firestore.");
+                console.error("User document does not exist in Firestore. UID:", user.uid);
                 return;
             }
 
-            const userData = userDoc.data(); // Retrieve user data (e.g., firstName, lastName, email)
+            const userData = userDoc.data();
+            console.log("User data fetched from Firestore:", userData);
 
-            // Fetch the user's location
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
+            // Update the DOM with user data
+            const userNameElement = document.getElementById('user-name');
+            const userEmailElement = document.getElementById('user-email');
 
-                    console.log("User's location:", { latitude, longitude });
+            if (userNameElement) {
+                userNameElement.textContent = `${userData.firstName} ${userData.lastName}`;
+            } else {
+                console.error("Element with ID 'user-name' not found in the DOM.");
+            }
 
-                    // Store the location in Firestore under the user's document
-                    await updateDoc(userDocRef, {
-                        location: {
-                            latitude: latitude,
-                            longitude: longitude,
-                            timestamp: new Date().toISOString(),
-                        },
-                    });
-
-                    console.log("Location stored successfully in Firestore for user:", userData);
-                },
-                (error) => {
-                    console.error("Error fetching location:", error);
-                }
-            );
+            if (userEmailElement) {
+                userEmailElement.textContent = userData.email;
+            } else {
+                console.error("Element with ID 'user-email' not found in the DOM.");
+            }
         } catch (error) {
-            console.error("Error fetching user details or storing location:", error);
+            console.error("Error fetching user details from Firestore:", error);
         }
+    } else {
+        console.error("No authenticated user found.");
+        window.location.href = "./index.html"; // Redirect to login page if not authenticated
+    }
+});
+
+// Function to fetch and store the user's location
+async function storeLocation(user) {
+    if (!navigator.geolocation) {
+        console.error("Geolocation is not supported by this browser.");
+        return;
     }
 
+    if (!user || !user.uid) {
+        console.error("No authenticated user found.");
+        return;
+    }
+
+    try {
+        // Fetch the user's location
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                console.log("User's location:", { latitude, longitude });
+
+                // Store the location in Firestore under the user's document
+                const userDocRef = doc(db, "users", user.uid);
+                await updateDoc(userDocRef, {
+                    location: {
+                        latitude: latitude,
+                        longitude: longitude,
+                        timestamp: new Date().toISOString(),
+                    },
+                });
+
+                console.log("Location stored successfully in Firestore for user:", user.uid);
+            },
+            (error) => {
+                console.error("Error fetching location:", error);
+            }
+        );
+    } catch (error) {
+        console.error("Error storing location in Firestore:", error);
+    }
+}
     // Call the function to store the location
     storeLocation();
 
@@ -417,15 +539,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Real-time location:", { latitude, longitude });
 
                 try {
-                    // Update the user's location in Firestore
-                    const userDocRef = doc(db, "users", user.uid);
-                    await updateDoc(userDocRef, {
-                        location: {
-                            latitude: latitude,
-                            longitude: longitude,
-                            timestamp: new Date().toISOString(),
-                        },
-                    });
+                    // Fetch the exact location name using the Nominatim API
+                    const geocodingUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+                    fetch(geocodingUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(async (data) => {
+                            const locationName = data.display_name || "Location not found";
+
+                            // Update Firestore with the location name
+                            const userDocRef = doc(db, "users", user.uid);
+                            await updateDoc(userDocRef, {
+                                location: {
+                                    latitude: latitude,
+                                    longitude: longitude,
+                                    name: locationName,
+                                    timestamp: new Date().toISOString(),
+                                },
+                            });
+
+                            console.log("Location name updated in Firestore:", locationName);
+                        })
+                        .catch(error => {
+                            console.error("Error fetching location name:", error);
+                        });
 
                     console.log("Real-time location updated in Firestore.");
                 } catch (error) {
@@ -459,8 +600,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             console.log("User is authenticated:", user);
 
-            // Start real-time location tracking
-            startRealTimeLocationTracking(user);
+            // Ensure the user object and UID are valid before starting real-time location tracking
+            if (user && user.uid) {
+                startRealTimeLocationTracking(user);
+            } else {
+                console.error("No authenticated user found or user UID is undefined.");
+                return; // Exit early to prevent further execution
+            }
 
             // Logout functionality
             logoutButton.addEventListener('click', async () => {
@@ -497,4 +643,38 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Error logging out:", error);
         }
     });
+});
+
+// Function to fetch and display all users in the student dashboard
+document.addEventListener('DOMContentLoaded', async () => {
+    const userListElement = document.getElementById('user-list'); // Ensure this element exists in student-dashboard.html
+
+    if (!userListElement) {
+        console.error("Element with ID 'user-list' not found in the DOM.");
+        return;
+    }
+
+    try {
+        const usersCollection = collection(db, "users");
+        const querySnapshot = await getDocs(usersCollection);
+
+        userListElement.innerHTML = ""; // Clear any existing content
+
+        querySnapshot.forEach((doc) => {
+            const userData = doc.data();
+            const userItem = document.createElement('div');
+            userItem.classList.add('user-item');
+
+            userItem.innerHTML = `
+                <p><strong>Name:</strong> ${userData.firstName} ${userData.lastName}</p>
+                <p><strong>Email:</strong> ${userData.email}</p>
+            `;
+
+            userListElement.appendChild(userItem);
+        });
+
+        console.log("Users fetched and displayed successfully.");
+    } catch (error) {
+        console.error("Error fetching users from Firestore:", error);
+    }
 });

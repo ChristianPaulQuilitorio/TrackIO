@@ -1,26 +1,40 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDlb3OuUZCmKKXfCZ0HN-lTS7Px3LTpEnY",
-    authDomain: "track-io-c06e4.firebaseapp.com",
-    projectId: "track-io-c06e4",
-    storageBucket: "track-io-c06e4.appspot.com",
-    messagingSenderId: "298561401488",
-    appId: "1:298561401488:web:c46ac57407eeddda125e15"
-};
-
+    apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
+    authDomain: "trackio-f5b07.firebaseapp.com",
+    projectId: "trackio-f5b07",
+    storageBucket: "trackio-f5b07.firebasestorage.app",
+    messagingSenderId: "1083789426923",
+    appId: "1:1083789426923:web:c372749a28e84ff9cd7eae",
+    measurementId: "G-DSPVFG2CYW"
+  };
+  
+localStorage.setItem('firebase:debug', 'true');
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Test Firebase initialization
+console.log("Firebase App Name:", app.name); // Should log "[DEFAULT]" if Firebase is initialized correctly
 
 // Initialize Firebase Authentication
 const auth = getAuth(app);
 
 // Initialize Firestore
 const db = getFirestore(app);
+
+// Set persistence to local (persists even after the browser is closed)
+setPersistence(auth, browserLocalPersistence)
+    .then(() => {
+        console.log("Authentication state persistence set to local.");
+    })
+    .catch((error) => {
+        console.error("Error setting persistence:", error);
+    });
 
 // Function to display messages
 function showMessage(message, divId) {
@@ -66,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Create user with email and password
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
-                console.log('User registered successfully:', user);
+                console.log('User registered successfully with UID:', user.uid, 'and email:', user.email);
 
                 // Add user data to Firestore
                 await setDoc(doc(db, "users", user.uid), {
@@ -96,51 +110,59 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
 
-// Handle Login
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('login-form');
-    const signInMessage = document.getElementById('signInMessage');
+    const loginButton = document.getElementById('submitLogin');
+    const loginMessage = document.getElementById('loginMessage');
 
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevent form submission
-
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-
-            // Validate input fields
-            if (!email || !password) {
-                signInMessage.style.display = 'block';
-                signInMessage.textContent = 'Please fill in all fields.';
+    if (loginButton) {
+        loginButton.addEventListener('click', async (event) => {
+            event.preventDefault(); // Prevent default button behavior
+    
+            const email = document.getElementById('lEmail').value.trim();
+            const password = document.getElementById('lPassword').value.trim();
+            
+            const allowedDomain = "@gordongollege.edu.ph";
+            if (email.endsWith(allowedDomain)) {
+                window.location.href = "./student-dashboard.html";
                 return;
-            }
-
+                        }
             try {
-                // Sign in with email and password
+                                // Sign in user with email and password
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
-                console.log('User logged in successfully:', user);
-
-                // Redirect to student dashboard
-                window.location.href = 'Student/student-dashboard.html';
-            } catch (error) {
-                console.error('Error during login:', error);
-                if (error.code === 'auth/user-not-found') {
-                    signInMessage.style.display = 'block';
-                    signInMessage.textContent = 'No user found with this email.';
-                } else if (error.code === 'auth/wrong-password') {
-                    signInMessage.style.display = 'block';
-                    signInMessage.textContent = 'Incorrect password.';
-                } else if (error.code === 'auth/invalid-email') {
-                    signInMessage.style.display = 'block';
-                    signInMessage.textContent = 'Invalid email address.';
+                console.log('User logged in successfully with UID:', user.uid, 'and email:', user.email);
+    
+                // Fetch user data from Firestore
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+    
+                if (userDoc.exists()) {
+                    console.log("User data from Firestore:", userDoc.data());
+                    showMessage("Login successful! Redirecting...", 'loginMessage');
+    
+                    // Redirect to Student dashboard
+                    setTimeout(() => {
+                        window.location.href = "./student/student-dashboard.html";
+                    }, 2000);
                 } else {
-                    signInMessage.style.display = 'block';
-                    signInMessage.textContent = 'Login failed. Please try again.';
+                    console.error("No user data found in Firestore for UID:", user.uid);
+                    showMessage("User data not found. Please contact support.", 'loginMessage');
+                }
+            } catch (error) {
+                console.error("Error during login:", error.code, error.message, error);
+                if (error.code === 'auth/user-not-found') {
+                    showMessage("No user found with this email.", 'loginMessage');
+                } else if (error.code === 'auth/wrong-password') {
+                    showMessage("Incorrect password. Please try again.", 'loginMessage');
+                } else if (error.code === 'auth/invalid-email') {
+                    showMessage("Invalid email address. Please check and try again.", 'loginMessage');
+                } else if (error.code === 'auth/too-many-requests') {
+                    showMessage("Too many failed login attempts. Please try again later.", 'loginMessage');
+                } else {
+                    showMessage(`Login failed: ${error.message}`, 'loginMessage');
                 }
             }
         });
     }
 });
+

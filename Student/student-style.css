@@ -2,6 +2,8 @@
 body {
     margin: 0;
     font-family: Arial, sans-serif;
+    padding-top: 80px;
+    padding-left: 40px; /* Add space at the top to prevent scrolling overlap */
 }
 
 /* Main header styling */
@@ -9,24 +11,22 @@ body {
     display: flex;
     justify-content: space-between; /* Space between left and right sections */
     align-items: center;
-    background-color: transparent; /* Remove background color */
-    padding: 80px 20px;
+    background-color: #007BFF; /* Add a background color for visibility */
+    padding: 10px 20px; /* Minimize padding for a smaller header */
     position: fixed;
-    top: 10px;
+    top: 0;
     left: 0;
     right: 0;
     z-index: 1000;
-    height: 60px;
+    height: 60px; /* Reduce the height of the header */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a shadow below the header */
 }
 
 /* Right-side header navigation */
 .right-header-nav {
     display: flex;
-    align-items: center;
+    align-items: left;
     gap: 20px; /* Space between notification and profile icons */
-    position: absolute;
-    top: 30px;
-    right: 40px; /* Align to the right side of the page */
 }
 
 .icon-link {
@@ -106,25 +106,19 @@ body {
     color: #666;
 }
 
-/* Navigation bar styling */
+/* Sidebar styling */
 .navbar {
     position: fixed;
-    top: 0; /* Move closer to the top */
-    left: 0; /* Keep it on the left side */
+    top: 60px; /* Position it below the header */
+    left: 0;
+    width: 200px; /* Fixed width for the sidebar */
+    height: calc(100vh - 60px); /* Full height minus the header height */
+    background-color: #007BFF;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    background-color: #007BFF;
-    padding: 60px 20px; /* Adjust padding for spacing */
-    height: calc(100vh - 20px); /* Full height minus top margin */
-    width: 200px; /* Fixed width for the navbar */
+    padding: 20px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Add a subtle shadow on the right */
-    transition: transform 0.3s ease;
-    z-index: 1000;
-}
-
-.navbar.hidden {
-    transform: translateX(-100%);
+    z-index: 900; /* Ensure it is below the header */
 }
 
 .navbar a {
@@ -192,8 +186,8 @@ body {
     z-index: 900; /* Place it behind the navbar */
     border-radius: 4px;
 }
-
 /* Check-In Container Styling */
+
 .check-in-container {
     margin: 100px auto; /* Add a larger margin at the top to avoid overlap */
     padding: 20px;
@@ -204,6 +198,7 @@ body {
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
 
 .remaining-hours {
     margin-bottom: 20px;
@@ -274,6 +269,133 @@ body {
     color: #555;
 }
 
+/* Style for the reset button */
+#reset-button {
+    background-color: #f44336; /* Red background */
+    color: white; /* White text */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Add padding */
+    text-align: center; /* Center text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Inline-block for layout */
+    font-size: 16px; /* Font size */
+    margin: 10px 0; /* Margin for spacing */
+    cursor: pointer; /* Pointer cursor on hover */
+    border-radius: 5px; /* Rounded corners */
+    transition: background-color 0.3s ease; /* Smooth hover effect */
+}
+
+#reset-button:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
+/* Main content container */
+.main-content {
+    display: flex;
+    flex-direction: row; /* Align items side by side */
+    height: calc(100vh - 60px); /* Full height minus the header height */
+    margin-left: 200px; /* Leave space for the sidebar */
+    box-sizing: border-box;
+    padding: 20px;
+    gap: 20px; /* Add space between the search bar and map */
+}
+
+/* Content container for search bar and map */
+.content-container {
+    display: flex;
+    flex: 1;
+    gap: 20px; /* Space between the search bar and map */
+    align-items: flex-start;
+}
+
+/* Company Finder Section */
+.company-finder-container {
+    flex: 1;
+    max-width: 400px; /* Set a fixed width for the search bar */
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    position: relative; /* Ensure the suggestion list is positioned relative to this container */
+}
+
+/* Search Input Styling */
+#company-search {
+    width: 100%; /* Full width inside the container */
+    padding: 10px 15px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease;
+}
+
+#company-search:focus {
+    border-color: #007BFF; /* Highlight border on focus */
+    outline: none;
+}
+
+/* Search Button Styling */
+#search-button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: white;
+    background-color: #007BFF;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#search-button:hover {
+    background-color: #0056b3;
+}
+
+/* Popup container for search suggestions */
+.company-results {
+    position: absolute;
+    top: calc(100% + 5px); /* Position it slightly below the search input */
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none; /* Hidden by default */
+}
+
+.company-results.visible {
+    display: block; /* Show when there are suggestions */
+}
+
+.company-result {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #ddd;
+}
+
+.company-result:last-child {
+    border-bottom: none;
+}
+
+.company-result:hover {
+    background-color: #f0f0f0;
+}
+
+/* Map Section */
+#map {
+    flex: 2; /* Allow the map to take up more space */
+    height: 300px; /* Set a smaller height for the map */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
 /* Responsive styling for mobile and tablet */
 @media (max-width: 768px) {
     .burger-button {
@@ -291,4 +413,92 @@ body {
     .navbar {
         width: 180px; /* Further reduce navbar width for smaller screens */
     }
+}
+
+/* Content area styling */
+.content {
+    margin-left: 220px; /* Add space for the left-side navbar */
+    padding: 20px;
+}
+
+/* Company Results Container */
+#company-results {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Company Card */
+.company-card {
+    display: flex;
+    align-items: center;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Company Icon */
+.company-icon {
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Company Info */
+.company-info h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.company-info p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #666;
+}
+
+/* OJT Company List Container */
+.ojt-company-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* OJT Company Card */
+.ojt-company-card {
+    display: flex;
+    align-items: center;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* OJT Company Icon */
+.ojt-company-icon {
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* OJT Company Info */
+.ojt-company-info h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.ojt-company-info p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #666;
 }

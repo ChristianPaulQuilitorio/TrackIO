@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
     <link rel="stylesheet" href="student-style.css"> <!-- Link to external CSS -->
+   
     <!-- Leaflet.js CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
@@ -27,8 +29,16 @@
     <!-- Notification Pop-Up -->
     <div class="notification-popup hidden" id="notification-popup"></div>
 
+    <!-- User Info Section -->
+    <div class="user-info" style="text-align: center; margin-top: 10px;">
+        <h2>Welcome, <span id="user-name">Guest</span></h2>
+        <p>Email: <span id="user-email">Not Available</span></p>
+    </div>
+
+    <!-- Navigation Bar -->
+
     <nav class="navbar">
-        <a href="#company-finder" class="nav-item" aria-label="Company Finder">
+        <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
             <img src="../img/Company-Finder.png" alt="Company Finder Icon">
             <span>Company Finder</span>
         </a>
@@ -56,6 +66,7 @@
         <button class="check-in-button" id="check-in-button">Check In</button>
     </div>
 
+    
     <!-- Geolocation Container -->
     <div class="geolocation-container">
         <h3>Your Current Location:</h3>
