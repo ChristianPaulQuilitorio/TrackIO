@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-import { getFirestore, getDoc, doc, updateDoc, collection, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getFirestore, getDoc, doc, updateDoc, collection, getDocs, arrayUnion, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -20,6 +20,24 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Authentication and Firestore
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Initialize Firestore and reference the 'users' collection
+const usersCollectionRef = collection(db, "users");
+
+// Example function to fetch all users from the 'users' collection
+async function fetchAllUsers() {
+    try {
+        const querySnapshot = await getDocs(usersCollectionRef);
+        querySnapshot.forEach((doc) => {
+            console.log(`User ID: ${doc.id}, Data:`, doc.data());
+        });
+    } catch (error) {
+        console.error("Error fetching users from Firestore:", error);
+    }
+}
+
+// Example usage of the fetchAllUsers function
+fetchAllUsers();
 
 // Example: Add interactivity to the navigation bar
 document.addEventListener('DOMContentLoaded', () => {
@@ -243,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Check In
             const currentTime = getCurrentDateTime();
             startTimeInput.value = currentTime;
+            console.log(`Checked In at: ${currentTime}`); // Log check-in time
             checkInButton.textContent = 'Check Out';
             checkInButton.classList.add('checked-out');
             isCheckedIn = true;
@@ -257,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Check Out
             const currentTime = getCurrentDateTime();
             endTimeInput.value = currentTime;
+            console.log(`Checked Out at: ${currentTime}`); // Log check-out time
 
             // Store check-in and check-out data in Firestore
             onAuthStateChanged(auth, (user) => {
@@ -420,6 +440,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 locationElement.textContent = "An unknown error occurred while fetching location.";
                 break;
         }
+
+        // Fallback: Stop real-time location tracking
+        stopRealTimeLocationTracking();
     }
 
     if (navigator.geolocation) {
@@ -444,7 +467,7 @@ onAuthStateChanged(auth, async (user) => {
 
             if (!userDoc.exists()) {
                 console.error("User document does not exist in Firestore. UID:", user.uid);
-                return;
+                return; // Exit if the user document does not exist
             }
 
             const userData = userDoc.data();
@@ -482,8 +505,8 @@ async function storeLocation(user) {
     }
 
     if (!user || !user.uid) {
-        console.error("No authenticated user found.");
-        return;
+        // Removed the console log for missing authenticated user in storeLocation
+        return; // Exit early to prevent further execution
     }
 
     try {
@@ -518,71 +541,19 @@ async function storeLocation(user) {
     // Call the function to store the location
     storeLocation();
 
-    // Function to start real-time location tracking
+    // Ensure startRealTimeLocationTracking is called only once
+    let isTrackingStarted = false;
     function startRealTimeLocationTracking(user) {
-        if (!navigator.geolocation) {
-            console.error("Geolocation is not supported by this browser.");
+        if (isTrackingStarted || !user || !user.uid) {
             return;
         }
+        isTrackingStarted = true;
 
-        if (!user || !user.uid) {
-            console.error("No authenticated user found or user UID is undefined.");
-            return;
-        }
-
-        // Start watching the user's location
-        watchId = navigator.geolocation.watchPosition(
-            async (position) => {
-                const latitude = position.coords.latitude;
-                const longitude = position.coords.longitude;
-
-                console.log("Real-time location:", { latitude, longitude });
-
-                try {
-                    // Fetch the exact location name using the Nominatim API
-                    const geocodingUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
-                    fetch(geocodingUrl)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! Status: ${response.status}`);
-                            }
-                            return response.json();
-                        })
-                        .then(async (data) => {
-                            const locationName = data.display_name || "Location not found";
-
-                            // Update Firestore with the location name
-                            const userDocRef = doc(db, "users", user.uid);
-                            await updateDoc(userDocRef, {
-                                location: {
-                                    latitude: latitude,
-                                    longitude: longitude,
-                                    name: locationName,
-                                    timestamp: new Date().toISOString(),
-                                },
-                            });
-
-                            console.log("Location name updated in Firestore:", locationName);
-                        })
-                        .catch(error => {
-                            console.error("Error fetching location name:", error);
-                        });
-
-                    console.log("Real-time location updated in Firestore.");
-                } catch (error) {
-                    console.error("Error updating location in Firestore:", error);
-                }
-            },
-            (error) => {
-                console.error("Error fetching real-time location:", error);
-            },
-            {
-                enableHighAccuracy: true, // Request high accuracy for better precision
-                timeout: 10000, // Timeout after 10 seconds
-                maximumAge: 0, // Do not use cached location
-            }
-        );
-
+        watchId = navigator.geolocation.watchPosition(updateLocation, handleLocationError, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        });
         console.log("Real-time location tracking started.");
     }
 
@@ -609,19 +580,24 @@ async function storeLocation(user) {
             }
 
             // Logout functionality
-            logoutButton.addEventListener('click', async () => {
-                try {
-                    await signOut(auth);
-                    console.log("User logged out successfully.");
-                    stopRealTimeLocationTracking(); // Stop tracking on logout
-                    window.location.href = "../index.html"; // Redirect to login page
-                } catch (error) {
-                    console.error("Error logging out:", error);
-                }
-            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton && window.location.pathname.includes('student-dashboard.html')) {
+                logoutButton.addEventListener('click', async () => {
+                    try {
+                        await signOut(auth); // Sign out the user
+                        console.log("User logged out successfully.");
+
+                        stopRealTimeLocationTracking(); // Stop tracking on logout
+
+                        window.location.href = './index.html'; // Redirect to the student login page
+                    } catch (error) {
+                        console.error("Error during logout:", error);
+                    }
+                });
+            }
         } else {
             console.error("No authenticated user found.");
-            window.location.href = "../index.html"; // Redirect to login page if not authenticated
+            window.location.href = "./index.html"; // Redirect to login page if not authenticated
         }
     });
 
@@ -632,17 +608,6 @@ async function storeLocation(user) {
     window.addEventListener("beforeunload", () => {
         stopRealTimeLocationTracking();
     });
-
-    // Logout functionality
-    logoutButton.addEventListener('click', async () => {
-        try {
-            await signOut(auth); // Sign out the user
-            console.log("User logged out successfully.");
-            window.location.href = "../index.html"; // Redirect to login page
-        } catch (error) {
-            console.error("Error logging out:", error);
-        }
-    });
 });
 
 // Function to fetch and display all users in the student dashboard
@@ -650,7 +615,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const userListElement = document.getElementById('user-list'); // Ensure this element exists in student-dashboard.html
 
     if (!userListElement) {
-        console.error("Element with ID 'user-list' not found in the DOM.");
         return;
     }
 
@@ -678,3 +642,98 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Error fetching users from Firestore:", error);
     }
 });
+
+// Ensure proper cleanup of resources during page unload
+window.addEventListener("beforeunload", () => {
+    stopRealTimeLocationTracking();
+});
+
+// Add fallback mechanism for users who deny location access
+function handleLocationError(error) {
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            console.error("User denied the request for Geolocation.");
+            locationElement.textContent = "Location access denied. Please enable location permissions.";
+            break;
+        case error.POSITION_UNAVAILABLE:
+            console.error("Location information is unavailable.");
+            locationElement.textContent = "Unable to determine location. Please try again later.";
+            break;
+        case error.TIMEOUT:
+            console.error("The request to get user location timed out.");
+            locationElement.textContent = "Location request timed out. Please ensure you have a stable connection.";
+            break;
+        default:
+            console.error("An unknown error occurred.", error);
+            locationElement.textContent = "An unknown error occurred while fetching location.";
+            break;
+    }
+
+    // Fallback: Stop real-time location tracking
+    stopRealTimeLocationTracking();
+}
+
+// Throttle geolocation API calls to avoid excessive requests
+let lastApiCallTime = 0;
+function updateLocation(position) {
+    const currentTime = Date.now();
+    if (currentTime - lastApiCallTime < 10000) { // Throttle to once every 10 seconds
+        return;
+    }
+    lastApiCallTime = currentTime;
+
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    console.log("Real-time location:", { latitude, longitude });
+
+    // Fetch and update location name
+    const geocodingUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+    fetch(geocodingUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const locationName = data.display_name || "Location not found";
+            locationElement.textContent = `Location: ${locationName}`;
+        })
+        .catch(error => {
+            console.error("Error fetching location name:", error);
+            locationElement.textContent = "Unable to fetch location name.";
+        });
+}
+
+// Ensure startRealTimeLocationTracking is called only once
+let isTrackingStarted = false;
+function startRealTimeLocationTracking(user) {
+    if (isTrackingStarted || !user || !user.uid) {
+        return;
+    }
+    isTrackingStarted = true;
+
+    watchId = navigator.geolocation.watchPosition(updateLocation, handleLocationError, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+    });
+    console.log("Real-time location tracking started.");
+}
+
+// Consolidated logout functionality specific to the Student context
+const logoutButton = document.getElementById('logout-button');
+if (logoutButton && window.location.pathname.includes('student-dashboard.html')) {
+    logoutButton.addEventListener('click', async () => {
+        try {
+            await signOut(auth); // Sign out the user
+            console.log("User logged out successfully.");
+
+            stopRealTimeLocationTracking(); // Stop tracking on logout
+
+            window.location.href = './index.html'; // Redirect to the student login page
+        } catch (error) {
+            console.error("Error during logout:", error);
+        }
+    });
+}
