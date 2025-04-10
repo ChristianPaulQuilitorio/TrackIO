@@ -58,13 +58,19 @@ document.addEventListener('DOMContentLoaded', () => {
         signUpButton.addEventListener('click', async (event) => {
             event.preventDefault();
 
-            const email = document.getElementById('rEmail').value.trim();
+            const emailElement = document.getElementById('rEmail');
+            if (!emailElement) {
+                console.error("Element with id 'rEmail' not found in the DOM.");
+                showMessage("Email field is missing. Please contact support.", 'signUpMessage');
+                return;
+            }
+
+            const email = emailElement.value.trim();
             const password = document.getElementById('rPassword').value.trim();
             const firstName = document.getElementById('rFirstName').value.trim();
             const lastName = document.getElementById('rLastName').value.trim();
-            const location = document.getElementById('rLocation').value.trim();
 
-            if (!firstName || !lastName || !email || !password || !location) {
+            if (!firstName || !lastName || !email || !password) {
                 showMessage("All fields are required.", 'signUpMessage');
                 return;
             }
@@ -81,8 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await setDoc(doc(db, "users", user.uid), {
                     firstName,
                     lastName,
-                    email,
-                    location
+                    email
                 });
 
                 showMessage("User registered successfully!", 'signUpMessage');
