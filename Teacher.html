@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login and Register</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to external CSS -->
+    <!-- Firebase Authentication Script -->
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <script type="module" src="Teacher-Auth.js"></script>
+</head>
+<body>
+    <div class="form-container" id="form-container">
+        <!-- Login Form -->
+        <div id="login-form-container">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <input type="email" id="lEmail" placeholder="Email" required />
+                <input type="password" id="lPassword" placeholder="Password" required />
+                <button id="submitLogin">Login</button>
+                <div id="loginMessage" style="display: none;"></div>
+            </form>
+            <div class="google-icon">
+                <img src="../img/google.png" alt="Google Icon">
+            </div>
+            <div class="toggle-link">
+                <p>Don't have an account? <a href="Teacher-register.html" id="show-register">Register</a></p>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            const emailInput = document.getElementById('lEmail');
+            const email = emailInput.value;
+            const loginMessage = document.getElementById('loginMessage');
+
+            // Basic email validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                event.preventDefault(); // Prevent form submission
+                loginMessage.style.display = 'block';
+                loginMessage.style.color = 'red';
+                loginMessage.textContent = 'Please enter a valid email address.';
+            } else {
+                loginMessage.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

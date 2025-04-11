@@ -62,9 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('rPassword').value.trim();
             const firstName = document.getElementById('rFirstName').value.trim();
             const lastName = document.getElementById('rLastName').value.trim();
-            
 
-            if (!firstName || !lastName || !email || !password || !location) {
+            if (!firstName || !lastName || !email || !password) {
                 showMessage("All fields are required.", 'signUpMessage');
                 return;
             }
@@ -78,42 +77,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                await setDoc(doc(db, "users", user.uid), {
+                await setDoc(doc(db, "Teacher", user.uid), {
                     firstName,
                     lastName,
-                    email,
-                    location
+                    email
                 });
 
                 showMessage("User registered successfully!", 'signUpMessage');
                 setTimeout(() => {
-                    window.location.href = "index.html";
+                    window.location.href = "Teacher.html";
                 }, 2000);
             } catch (error) {
-                console.error("Error during registration:", error);
-                const errorMessages = {
-                    'auth/email-already-in-use': "Email already in use.",
-                    'auth/invalid-email': "Invalid email address.",
-                    'auth/weak-password': "Password must be at least 6 characters long."
-                };
-                showMessage(errorMessages[error.code] || "Registration failed. Please try again.", 'signUpMessage');
+                if (error.code === 'auth/email-already-in-use') {
+                    showMessage("Email already in use.", 'signUpMessage');
+                } else if (error.code === 'auth/invalid-email') {
+                    showMessage("Invalid email address.", 'signUpMessage');
+                } else if (error.code === 'auth/weak-password') {
+                    showMessage("Password must be at least 6 characters long.", 'signUpMessage');
+                } else {
+                    showMessage("Registration failed. Please try again.", 'signUpMessage');
+                }
             }
         });
     }
 
     const loginButton = document.getElementById('submitLogin');
-    const emailInput = document.getElementById('lEmail');
-    const passwordInput = document.getElementById('lPassword');
+    const loginMessage = document.getElementById('loginMessage');
 
-    if (loginButton && emailInput && passwordInput) {
+    if (loginButton) {
         loginButton.addEventListener('click', async (event) => {
             event.preventDefault();
 
-            const email = emailInput.value.trim();
-            const password = passwordInput.value.trim();
+            const email = document.getElementById('lEmail').value.trim();
+            const password = document.getElementById('lPassword').value.trim();
 
-            if (!email.endsWith("@gordoncollege.edu.ph")) {
-                showMessage("Email must end with @gordoncollege.edu.ph", 'loginMessage');
+            if (!email) {
+                showMessage("Please enter a valid email address.", 'loginMessage');
                 return;
             }
 
@@ -121,30 +120,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                const userDocRef = doc(db, "users", user.uid);
+                const userDocRef = doc(db, "Teacher", user.uid);
                 const userDoc = await getDoc(userDocRef);
 
                 if (userDoc.exists()) {
                     showMessage("Login successful! Redirecting...", 'loginMessage');
                     setTimeout(() => {
-                        window.location.href = "./student-dashboard.html";
+                        window.location.href = "./Teacher-dashboard.html";
                     }, 2000);
                 } else {
                     showMessage("User data not found. Please contact support.", 'loginMessage');
                 }
             } catch (error) {
-                console.error("Error during login:", error);
-                const errorMessages = {
-                    'auth/user-not-found': "No user found with this email.",
-                    'auth/wrong-password': "Incorrect password. Please try again.",
-                    'auth/invalid-email': "Invalid email address. Please check and try again.",
-                    'auth/too-many-requests': "Too many failed login attempts. Please try again later."
-                };
-                showMessage(errorMessages[error.code] || `Login failed: ${error.message}`, 'loginMessage');
+                if (error.code === 'auth/user-not-found') {
+                    showMessage("No user found with this email.", 'loginMessage');
+                } else if (error.code === 'auth/wrong-password') {
+                    showMessage("Incorrect password. Please try again.", 'loginMessage');
+                } else if (error.code === 'auth/invalid-email') {
+                    showMessage("Invalid email address. Please check and try again.", 'loginMessage');
+                } else if (error.code === 'auth/too-many-requests') {
+                    showMessage("Too many failed login attempts. Please try again later.", 'loginMessage');
+                } else {
+                    showMessage(`Login failed: ${error.message}`, 'loginMessage');
+                }
             }
         });
-    } else {
-        console.log("Login elements are not present on this page.");
+    }
+
+    const currentPath = window.location.pathname;
+    if (currentPath.endsWith("Teacher-dashboard.html")) {
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = "Teacher.html";
+            }
+        });
     }
 });
+
 
