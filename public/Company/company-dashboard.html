@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Dashboard</title>
+    <link rel="stylesheet" href="../student/student-style.css"> <!-- Ensure the correct path -->
+    <link rel="stylesheet" href="../styles.css"> <!-- Ensure the correct path -->
+    <link rel="stylesheet" href="company-style.css"> <!-- Link to company-specific CSS -->
+</head>
+<body>
+    <header class="main-header">
+        <button class="burger-button" aria-label="Toggle Navigation">
+            ☰
+        </button>
+        <nav class="right-header-nav">
+            <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
+                <img src="../img/notification.png" alt="Notification Icon">
+            </a>
+            <a href="company-profile.html" class="icon-link" aria-label="Profile">
+                <img src="../img/profile.png" alt="Profile Icon">
+            </a>
+            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button> <!-- Logout Button -->
+        </nav>
+    </header>
+
+    <!-- Notification Pop-Up -->
+    <div class="notification-popup hidden" id="notification-popup"></div>
+
+    <!-- User Info Section -->
+    <div class="user-info" style="text-align: center; margin-top: 10px;">
+        <h2>Welcome, <span id="user-name">Guest</span></h2>
+        <p>Email: <span id="user-email">Not Available</span></p>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
+            <img src="../img/Company-Finder.png" alt="Company Finder Icon">
+            <span>Company Finder</span>
+        </a>
+        <a href="#work-details" class="nav-item" aria-label="Work Details">
+            <img src="../img/Work-Details.png" alt="Work Details Icon">
+            <span>Work Details</span>
+        </a>
+        <a href="#documentation" class="nav-item" aria-label="Documentation">
+            <img src="../img/Documentation.png" alt="Documentation Icon">
+            <span>Documentation</span>
+        </a>
+        <a href="#about" class="nav-item" aria-label="About">
+            <img src="../img/about.png" alt="About Icon">
+            <span>About</span>
+        </a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+        <h1>Welcome to the Company Dashboard</h1>
+        <p>Use the navigation bar to access different sections of the dashboard.</p>
+    </main>
+    <script type="module" src="company-auth.js"></script>
+</body>
+</html>
