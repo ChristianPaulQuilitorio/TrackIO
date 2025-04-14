@@ -157,8 +157,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     console.warn("Student document does not exist. Creating a new document...");
                     await setDoc(studentDocRef, {
-                        firstName: "Unknown",
-                        lastName: "Student",
+                        firstName: student.firstName,
+                        lastName: student.lastName,
                         email: student.email,
                         uid: student.uid,
                         accountType: "student"

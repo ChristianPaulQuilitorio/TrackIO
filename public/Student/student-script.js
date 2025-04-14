@@ -1,8 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-import { getFirestore, getDoc, doc, updateDoc, collection, getDocs, arrayUnion, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-// Firebase configuration
+
 const firebaseConfig = {
     apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
     authDomain: "trackio-f5b07.firebaseapp.com",
@@ -42,6 +42,19 @@ function getCurrentDate() {
     const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
     const day = String(now.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+}
+
+// Helper function to convert 12-hour time (with AM/PM) to 24-hour time
+function convertTo24HourFormat(time12h) {
+    const [time, modifier] = time12h.split(' ');
+    let [hours, minutes] = time.split(':');
+    if (modifier === 'PM' && hours !== '12') {
+        hours = parseInt(hours, 10) + 12;
+    }
+    if (modifier === 'AM' && hours === '12') {
+        hours = '00';
+    }
+    return `${hours}:${minutes}`;
 }
 
 // Example usage of the fetchAllStudents function
@@ -135,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isCheckedIn = false;
     let remainingHours = 200;
-    let watchId = null; // ID for the geolocation watcher
 
     // Function to get the current date and time in MM/DD/YY and 12-hour format
     function getCurrentDateTime() {
@@ -329,217 +341,218 @@ document.addEventListener('DOMContentLoaded', () => {
         await resetDataForCurrentDate(user);
 
         // Reload calendar events to reflect the changes
-        loadCalendarEvents(user);
+        await loadCalendarEvents(user);
     });
 
-    // Geolocation functionality
-    const mapContainer = document.getElementById('map');
-    let map = null; // Leaflet map instance
-    let marker = null; // Leaflet marker instance
-    let lastFetchedLocation = null; // Cache for the last fetched location
-    let lastApiCallTime = 0; // Timestamp for throttling API calls
-    let isSatelliteView = false; // Track the current map view (default is standard)
+// Geolocation functionality
+const mapContainer = document.getElementById('map');
+let map = null; // Leaflet map instance
+let marker = null; // Leaflet marker instance
+let watchId = null; // ID for the geolocation watcher
+let isSatelliteView = false; // Track the current map view (default is standard)
 
-    // Function to fetch the location name using reverse geocoding
-    async function fetchLocationName(latitude, longitude) {
-        const apiKey = "YOUR_API_KEY"; // Replace with your reverse geocoding API key
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+// Function to fetch the location name using reverse geocoding
+async function fetchLocationName(latitude, longitude) {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
 
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            const address = data.address;
-            const locationName = `${address.village || address.town || address.city}, ${address.state}, ${address.postcode}`;
-            console.log("Fetched location name:", locationName);
-            return locationName;
-        } catch (error) {
-            console.error("Error fetching location name:", error);
-            return "Unknown Location";
-        }
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const address = data.address;
+        const locationName = `${address.village || address.town || address.city}, ${address.state}, ${address.postcode}`;
+        console.log("Fetched location name:", locationName);
+        return locationName;
+    } catch (error) {
+        console.error("Error fetching location name:", error);
+        return "Unknown Location";
+    }
+}
+
+// Function to initialize or update the map
+function initializeMap(latitude, longitude, firstName, lastName, locationName) {
+    if (!map) {
+        // Initialize the map if it doesn't exist
+        map = L.map('map').setView([latitude, longitude], 13); // Set initial view with zoom level 13
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+        }).addTo(map);
     }
 
-    // Function to initialize or update the map
-    function initializeMap(latitude, longitude, firstName, lastName, locationName) {
-        if (!map) {
-            // Initialize the map if it doesn't exist
-            map = L.map('map').setView([latitude, longitude], 13); // Set initial view with zoom level 13
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-            }).addTo(map);
-        }
-
-        if (marker) {
-            // Remove the existing marker
-            map.removeLayer(marker);
-        }
-
-        // Define a custom icon for the marker
-        const customIcon = L.icon({
-            iconUrl: '../img/sample-profile.jpg', // Path to the custom marker image
-            iconSize: [40, 40], // Size of the icon [width, height]
-            iconAnchor: [20, 40], // Anchor point of the icon [x, y]
-            popupAnchor: [0, -40], // Position of the popup relative to the icon [x, y]
-        });
-
-        // Add a new marker at the updated location with the custom icon
-        marker = L.marker([latitude, longitude], { icon: customIcon }).addTo(map);
-        marker.bindPopup(`
-            <strong>${firstName} ${lastName}</strong><br>
-            Location: ${locationName}<br>
-            Latitude: ${latitude}, Longitude: ${longitude}
-        `).openPopup();
+    if (marker) {
+        // Remove the existing marker
+        map.removeLayer(marker);
     }
 
-    // Function to update the user's location on the map and in Firestore
-    async function updateLocation(position) {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        const accuracy = position.coords.accuracy; // Accuracy in meters
-
-        console.log("Real-time location:", { latitude, longitude, accuracy });
-
-        // Update the location element
-        locationElement.textContent = `Latitude: ${latitude}, Longitude: ${longitude}, Accuracy: ${accuracy} meters`;
-
-        const user = auth.currentUser;
-        if (!user || !user.uid) {
-            console.error("No authenticated user found.");
-            return;
-        }
-
-        const studentDocRef = doc(db, "students", user.uid);
-
-        try {
-            const studentDoc = await getDoc(studentDocRef);
-
-            let studentData = {};
-            if (studentDoc.exists()) {
-                studentData = studentDoc.data();
-            } else {
-                console.warn("Student document does not exist. Creating a new document...");
-                studentData = {
-                    firstName: "Unknown",
-                    lastName: "User",
-                    email: user.email,
-                    uid: user.uid,
-                    accountType: "student",
-                };
-                await setDoc(studentDocRef, studentData);
-                console.log("Default student document created in Firestore:", studentData);
-            }
-
-            // Fetch the location name using reverse geocoding
-            const locationName = await fetchLocationName(latitude, longitude);
-
-            // Update Firestore with the location data
-            await updateDoc(studentDocRef, {
-                location: {
-                    latitude: latitude,
-                    longitude: longitude,
-                    name: locationName,
-                    timestamp: new Date().toISOString(),
-                },
-            });
-            console.log("Location updated in Firestore.");
-
-            // Initialize or update the map
-            initializeMap(latitude, longitude, studentData.firstName, studentData.lastName, locationName);
-        } catch (error) {
-            console.error("Error fetching location name or updating Firestore:", error);
-        }
-    }
-
-    // Function to handle location errors
-    function handleLocationError(error) {
-        switch (error.code) {
-            case error.PERMISSION_DENIED:
-                console.error("User denied the request for Geolocation.");
-                locationElement.textContent = "Location access denied. Please enable location permissions.";
-                break;
-            case error.POSITION_UNAVAILABLE:
-                console.error("Location information is unavailable.");
-                locationElement.textContent = "Unable to determine location. Please try again later.";
-                break;
-            case error.TIMEOUT:
-                console.error("The request to get user location timed out.");
-                locationElement.textContent = "Location request timed out. Please ensure you have a stable connection.";
-                break;
-            default:
-                console.error("An unknown error occurred.", error);
-                locationElement.textContent = "An unknown error occurred while fetching location.";
-                break;
-        }
-
-        // Stop real-time location tracking as a fallback
-        stopRealTimeLocationTracking();
-    }
-
-    // Function to start real-time location tracking
-    function startRealTimeLocationTracking() {
-        if (!navigator.geolocation) {
-            console.error("Geolocation is not supported by this browser.");
-            locationElement.textContent = "Geolocation is not supported by this browser.";
-            return;
-        }
-
-        watchId = navigator.geolocation.watchPosition(updateLocation, handleLocationError, {
-            enableHighAccuracy: true, // Request high accuracy for better precision
-            timeout: 10000, // Timeout after 10 seconds
-            maximumAge: 0, // Do not use cached location
-        });
-
-        console.log("Real-time location tracking started.");
-    }
-
-    // Function to stop real-time location tracking
-    function stopRealTimeLocationTracking() {
-        if (watchId !== null) {
-            navigator.geolocation.clearWatch(watchId); // Stop tracking
-            watchId = null;
-            console.log("Real-time location tracking stopped.");
-        }
-    }
-
-    // Start tracking when the page loads
-    startRealTimeLocationTracking();
-
-    // Stop tracking when the user navigates away
-    window.addEventListener("beforeunload", () => {
-        stopRealTimeLocationTracking();
+    // Define a custom icon for the marker
+    const customIcon = L.icon({
+        iconUrl: '../img/sample-profile.jpg', // Path to the custom marker image
+        iconSize: [40, 40], // Size of the icon [width, height]
+        iconAnchor: [20, 40], // Anchor point of the icon [x, y]
+        popupAnchor: [0, -40], // Position of the popup relative to the icon [x, y]
     });
 
-    // Add a button to toggle between satellite and standard views
-    const toggleViewButton = document.createElement('button');
-    toggleViewButton.textContent = 'Toggle Map View';
-    toggleViewButton.style.marginTop = '10px';
-    toggleViewButton.addEventListener('click', toggleMapView);
-    mapContainer.parentElement.appendChild(toggleViewButton);
+    // Add a new marker at the updated location with the custom icon
+    marker = L.marker([latitude, longitude], { icon: customIcon }).addTo(map);
+    marker.bindPopup(`
+        <strong>${firstName} ${lastName}</strong><br>
+        Location: ${locationName}<br>
+        Latitude: ${latitude}, Longitude: ${longitude}
+    `).openPopup();
+}
 
-    // Function to toggle between satellite and standard map views
-    function toggleMapView() {
-        if (!map) {
-            console.error("Map is not initialized.");
-            return;
-        }
+// Function to update the user's location on the map and in Firestore
+async function updateLocation(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    const accuracy = position.coords.accuracy; // Accuracy in meters
 
-        if (isSatelliteView) {
-            // Switch to standard view
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19,
-            }).addTo(map);
-            console.log("Switched to standard map view.");
+    console.log("Real-time location:", { latitude, longitude, accuracy });
+
+    // Update the location element
+    const locationElement = document.getElementById('location');
+    locationElement.textContent = `Latitude: ${latitude}, Longitude: ${longitude}, Accuracy: ${accuracy} meters`;
+
+    const user = auth.currentUser; // Get the current user
+    if (!user || !user.uid) {
+        console.error("No authenticated user found.");
+        return;
+    }
+
+    const studentDocRef = doc(db, "students", user.uid);
+
+    try {
+        const studentDoc = await getDoc(studentDocRef);
+
+        let studentData = {};
+        if (studentDoc.exists()) {
+            studentData = studentDoc.data();
         } else {
-            // Switch to satellite view
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
-                maxZoom: 23,
-            }).addTo(map);
-            console.log("Switched to satellite map view.");
+            console.warn("Student document does not exist. Creating a new document...");
+            studentData = {
+                firstName: "Unknown",
+                lastName: "User",
+                email: user.email,
+                uid: user.uid,
+                accountType: "student",
+            };
+            await setDoc(studentDocRef, studentData);
+            console.log("Default student document created in Firestore:", studentData);
         }
 
-        isSatelliteView = !isSatelliteView; // Toggle the view state
+        // Fetch the location name using reverse geocoding
+        const locationName = await fetchLocationName(latitude, longitude);
+
+        // Update Firestore with the location data
+        await updateDoc(studentDocRef, {
+            location: {
+                latitude: latitude,
+                longitude: longitude,
+                name: locationName,
+                timestamp: new Date().toISOString(),
+            },
+        });
+        console.log("Location updated in Firestore.");
+
+        // Initialize or update the map
+        initializeMap(latitude, longitude, studentData.firstName, studentData.lastName, locationName);
+    } catch (error) {
+        console.error("Error fetching location name or updating Firestore:", error);
     }
+}
+
+// Function to handle location errors
+function handleLocationError(error) {
+    const locationElement = document.getElementById('location');
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            console.error("User denied the request for Geolocation.");
+            locationElement.textContent = "Location access denied. Please enable location permissions.";
+            break;
+        case error.POSITION_UNAVAILABLE:
+            console.error("Location information is unavailable.");
+            locationElement.textContent = "Unable to determine location. Please try again later.";
+            break;
+        case error.TIMEOUT:
+            console.error("The request to get user location timed out.");
+            locationElement.textContent = "Location request timed out. Please ensure you have a stable connection.";
+            break;
+        default:
+            console.error("An unknown error occurred.", error);
+            locationElement.textContent = "An unknown error occurred while fetching location.";
+            break;
+    }
+
+    // Stop real-time location tracking as a fallback
+    stopRealTimeLocationTracking();
+}
+
+// Function to start real-time location tracking
+function startRealTimeLocationTracking() {
+    if (!navigator.geolocation) {
+        console.error("Geolocation is not supported by this browser.");
+        const locationElement = document.getElementById('location');
+        locationElement.textContent = "Geolocation is not supported by this browser.";
+        return;
+    }
+
+    watchId = navigator.geolocation.watchPosition(updateLocation, handleLocationError, {
+        enableHighAccuracy: true, // Request high accuracy for better precision
+        timeout: 10000, // Timeout after 10 seconds
+        maximumAge: 0, // Do not use cached location
+    });
+
+    console.log("Real-time location tracking started.");
+}
+
+// Function to stop real-time location tracking
+function stopRealTimeLocationTracking() {
+    if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId); // Stop tracking
+        watchId = null;
+        console.log("Real-time location tracking stopped.");
+    }
+}
+
+// Start tracking when the page loads
+startRealTimeLocationTracking();
+
+// Stop tracking when the user navigates away
+window.addEventListener("beforeunload", () => {
+    stopRealTimeLocationTracking();
+});
+
+// Add a button to toggle between satellite and standard views
+const toggleViewButton = document.createElement('button');
+toggleViewButton.textContent = 'Toggle Map View';
+toggleViewButton.style.marginTop = '10px';
+toggleViewButton.addEventListener('click', toggleMapView);
+mapContainer.parentElement.appendChild(toggleViewButton);
+
+// Function to toggle between satellite and standard map views
+function toggleMapView() {
+    if (!map) {
+        console.error("Map is not initialized.");
+        return;
+    }
+
+    if (isSatelliteView) {
+        // Switch to standard view
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19,
+        }).addTo(map);
+        console.log("Switched to standard map view.");
+    } else {
+        // Switch to satellite view
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+            maxZoom: 23,
+        }).addTo(map);
+        console.log("Switched to satellite map view.");
+    }
+
+    isSatelliteView = !isSatelliteView; // Toggle the view state
+}
 });
 
 // Enhanced error handling and logging for fetching user data
@@ -703,19 +716,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (studentDoc.exists()) {
                 const checkInOutData = studentDoc.data().checkInOutData || [];
-                const events = checkInOutData.flatMap((entry) => {
+                const events = checkInOutData.flatMap((entry, index) => {
                     const date = entry.date; // Date in YYYY-MM-DD format
-                    const checkInEvent = {
-                        title: `Check-In: ${entry.checkInTime}`,
-                        start: `${date}T${convertTo24HourFormat(entry.checkInTime)}`, // Combine date and time
-                        color: '#4CAF50', // Green for Check-In
-                    };
-                    const checkOutEvent = {
-                        title: `Check-Out: ${entry.checkOutTime}`,
-                        start: `${date}T${convertTo24HourFormat(entry.checkOutTime)}`, // Combine date and time
-                        color: '#f44336', // Red for Check-Out
-                    };
-                    return [checkInEvent, checkOutEvent];
+                    const checkInEvent = entry.checkInTime
+                        ? {
+                            id: `${index}-checkIn`, // Unique ID for the event
+                            title: `Check-In: ${entry.checkInTime}`,
+                            start: `${date}T${convertTo24HourFormat(entry.checkInTime)}`, // Combine date and time
+                            color: '#4CAF50', // Green for Check-In
+                            extendedProps: { index, type: 'checkIn' }, // Custom properties
+                        }
+                        : null;
+                    const checkOutEvent = entry.checkOutTime
+                        ? {
+                            id: `${index}-checkOut`, // Unique ID for the event
+                            title: `Check-Out: ${entry.checkOutTime}`,
+                            start: `${date}T${convertTo24HourFormat(entry.checkOutTime)}`, // Combine date and time
+                            color: '#f44336', // Red for Check-Out
+                            extendedProps: { index, type: 'checkOut' }, // Custom properties
+                        }
+                        : null;
+                    return [checkInEvent, checkOutEvent].filter(event => event !== null);
                 });
 
                 calendar.removeAllEvents(); // Clear existing events
@@ -726,19 +747,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error("Error loading calendar events:", error);
         }
-    }
-
-    // Helper function to convert 12-hour time (with AM/PM) to 24-hour time
-    function convertTo24HourFormat(time12h) {
-        const [time, modifier] = time12h.split(' ');
-        let [hours, minutes] = time.split(':');
-        if (modifier === 'PM' && hours !== '12') {
-            hours = parseInt(hours, 10) + 12;
-        }
-        if (modifier === 'AM' && hours === '12') {
-            hours = '00';
-        }
-        return `${hours}:${minutes}`;
     }
 
     // Function to store check-in and check-out data in Firestore
@@ -779,6 +787,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error("Error storing check-in and check-out data in Firestore:", error);
         }
     }
+
+    // Function to delete an event from Firestore
+    async function deleteEvent(user, eventId) {
+        if (!user || !user.uid) {
+            console.error("No authenticated user found.");
+            return;
+        }
+
+        try {
+            const studentDocRef = doc(db, "students", user.uid);
+            const studentDoc = await getDoc(studentDocRef);
+
+            if (studentDoc.exists()) {
+                let checkInOutData = studentDoc.data().checkInOutData || [];
+                const [index] = eventId.split('-'); // Extract index from event ID
+
+                // Remove the entire entry for the selected day
+                checkInOutData.splice(index, 1);
+
+                // Update Firestore with the modified data
+                await updateDoc(studentDocRef, {
+                    checkInOutData: checkInOutData
+                });
+
+                console.log(`Data for the selected day (index: ${index}) deleted successfully.`);
+            } else {
+                console.warn("Student document does not exist for UID:", user.uid);
+            }
+        } catch (error) {
+            console.error("Error deleting event from Firestore:", error);
+        }
+    }
+
+    // Add event click handler to the calendar
+    calendar.on('eventClick', async (info) => {
+        const user = auth.currentUser;
+        if (!user) {
+            alert("You must be logged in to delete events.");
+            return;
+        }
+
+        const eventId = info.event.id; // Get the event ID
+        const confirmDelete = confirm(`Are you sure you want to delete all data for this day?`);
+        if (confirmDelete) {
+            await deleteEvent(user, eventId); // Delete the entire day's data from Firestore
+            await loadCalendarEvents(user); // Reload calendar events
+        }
+    });
 
     // Handle Check-In and Check-Out
     checkInButton.addEventListener('click', async () => {
@@ -840,7 +896,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await resetDataForCurrentDate(user);
 
         // Reload calendar events to reflect the changes
-        loadCalendarEvents(user);
+        await loadCalendarEvents(user);
     });
 
     // Load calendar events on page load

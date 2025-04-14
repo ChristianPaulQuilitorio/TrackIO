@@ -4,12 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard</title>
+    <title>Student Profile</title>
     <link rel="stylesheet" href="student-style.css"> <!-- Link to external CSS -->
-    <!-- Leaflet.js CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- FullCalendar CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
 </head>
 <body>
     <header class="main-header">
@@ -20,7 +16,7 @@
             <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
                 <img src="../img/notification.png" alt="Notification Icon">
             </a>
-            <a href="student-profile.html" class="icon-link" aria-label="Profile">
+            <a href="#profile" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
             <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button> <!-- Logout Button -->
@@ -35,8 +31,6 @@
         <h2>Welcome, <span id="user-name">Guest</span></h2>
         <p>Email: <span id="user-email">Not Available</span></p>
     </div>
-
-  
 
     <!-- Navigation Bar -->
 
@@ -59,33 +53,27 @@
         </a>
     </nav>
 
-    <!-- Check-In Container -->
-    <div class="check-in-container">
-        <div class="remaining-hours">
-            <p>Remaining Hours: <span id="remaining-hours">200</span> hours</p>
-        </div>
-        <input type="text" id="start-time" placeholder="Check-In Time" readonly />
-        <input type="text" id="end-time" placeholder="Check-Out Time" readonly />
-        <button id="check-in-button">Check In</button>
+    <div class="profile-container">
+        <h1>Student Profile</h1>
+        <p><strong>Email:</strong> <span id="profile-email">Loading...</span></p>
+        <p>
+            <strong>First Name:</strong>
+            <input type="text" id="profile-first-name" placeholder="Enter first name" />
+        </p>
+        <p>
+            <strong>Last Name:</strong>
+            <input type="text" id="profile-last-name" placeholder="Enter last name" />
+        </p>
+        <p>
+            <strong>Profile Photo:</strong>
+            <input type="file" id="photo-upload" accept="image/*" />
+            <img id="profile-photo" src="../img/sample-profile.jpg" alt="Profile Photo" style="width: 100px; height: 100px;"/>
+        </p>
+        <button id="save-profile-button">Save</button>
+        <button id="logout-button">Logout</button>
     </div>
 
-    <!-- Calendar Container -->
-    <div id="calendar-container">
-        <div id="calendar"></div>
-    </div>
-
-
-    <!-- Geolocation Container -->
-    <div class="geolocation-container">
-        <h3>Your Current Location:</h3>
-        <p id="location">Fetching location...</p>
-        <div id="map" style="width: 100%; height: 300px; border: 1px solid #ddd;"></div>
-    </div>
-
-    <!-- Leaflet.js JavaScript -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- FullCalendar JS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script type="module" src="student-script.js"></script> <!-- Link to external JavaScript -->
+    <!-- Link to the student-profile.js script -->
+    <script type="module" src="student-profile.js"></script>
 </body>
 </html>
