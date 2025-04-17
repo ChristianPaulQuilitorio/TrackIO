@@ -430,8 +430,8 @@ async function updateLocation(position) {
         } else {
             console.warn("Student document does not exist. Creating a new document...");
             studentData = {
-                firstName: "Unknown",
-                lastName: "User",
+                firstName: user.firstName,
+                lastName: user.lastName,
                 email: user.email,
                 uid: user.uid,
                 accountType: "student",
@@ -629,7 +629,7 @@ if (logoutButton && window.location.pathname.includes('student-dashboard.html'))
 
             stopRealTimeLocationTracking(); // Stop tracking on logout
 
-            window.location.href = './student-index.html'; // Redirect to the student login page
+            window.location.href = './student-login.html'; // Redirect to the student login page
         } catch (error) {
             console.error("Error during logout:", error);
         }
@@ -680,7 +680,7 @@ onAuthStateChanged(auth, (user) => {
         loadStudentProfile(user); // Load the profile when the user is authenticated
     } else {
         console.error("No authenticated user found.");
-        window.location.href = "student-index.html"; // Redirect to login if not authenticated
+        window.location.href = "student-login.html"; // Redirect to login if not authenticated
     }
 });
 

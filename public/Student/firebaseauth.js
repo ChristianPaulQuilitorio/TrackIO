@@ -1,7 +1,21 @@
 // Import Firebase modules
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import {getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, signOut, onAuthStateChanged, sendEmailVerification} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    setPersistence,
+    browserLocalPersistence,
+    signOut,
+    sendEmailVerification,
+    updatePassword,
+    updateProfile
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -14,8 +28,14 @@ const firebaseConfig = {
     measurementId: "G-DSPVFG2CYW"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase only if not already initialized
+let app;
+if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);  // Initialize Firebase if not yet done
+} else {
+    app = getApp();  // Use the already initialized app
+}
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -24,6 +44,7 @@ setPersistence(auth, browserLocalPersistence)
     .then(() => console.log("Persistence set"))
     .catch((error) => console.error("Persistence error:", error));
 
+// Show feedback message
 function showMessage(message, divId) {
     const messageDiv = document.getElementById(divId);
     if (messageDiv) {
@@ -35,7 +56,23 @@ function showMessage(message, divId) {
     }
 }
 
-// Common form validation function
+// Fetch user profile from local database via PHP API
+async function fetchUserProfile(uid) {
+    try {
+        const response = await fetch(`../../PHP/get-student-profile.php?uid=${uid}`);
+        const data = await response.json();
+        if (data.status === "success") {
+            return data.profile;  // Return profile data
+        } else {
+            throw new Error(data.message || "Error fetching profile");
+        }
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+        throw error;  // Rethrow to handle further in the calling code
+    }
+}
+
+// Validate form fields
 function validateEmailAndPassword(email, password) {
     if (!email || !password) {
         return "Email and password are required.";
@@ -46,105 +83,38 @@ function validateEmailAndPassword(email, password) {
     return null;
 }
 
-// Authentication state handler
-onAuthStateChanged(auth, (student) => {
-    const currentPath = window.location.pathname;
+// DOM Ready Logic
+document.addEventListener('DOMContentLoaded', async () => {
+    const user = auth.currentUser;  // Get the logged-in user
+    const userNameSpan = document.getElementById("user-name");
+    const userEmailSpan = document.getElementById("user-email");
 
-    if (!student) {
-        if (!currentPath.includes("student-index.html") && !currentPath.includes("verification.html")) {
-            window.location.href = "student-index.html";
+    // Check if the user is authenticated
+    if (user) {
+        userEmailSpan.textContent = user.email;  // Display the email
+
+        // Fetch user data from the PHP backend
+        try {
+            const userProfile = await fetchUserProfile(user.uid);
+            const firstName = userProfile.firstName;
+            const lastName = userProfile.lastName;
+
+            // Display the first and last name
+            userNameSpan.textContent = `${firstName} ${lastName}`;
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            userNameSpan.textContent = "Guest";  // Default fallback
         }
     } else {
-        if (!student.emailVerified) {
-            if (!currentPath.includes("verification.html")) {
-                window.location.href = "verification.html";
-            }
-        } else {
-            if (currentPath.includes("student-index.html")) {
-                window.location.href = "student-dashboard.html";
-            }
-        }
+        // If no user is logged in, show "Guest"
+        userNameSpan.textContent = "Guest";
+        userEmailSpan.textContent = "Not Available";
     }
-});
 
-// Register Form Logic
-document.addEventListener('DOMContentLoaded', () => {
-    const signUpButton = document.getElementById('submitSignUp');
     const loginButton = document.getElementById('submitLogin');
     const logoutButton = document.getElementById('logout-button');
 
-    if (signUpButton) {
-        signUpButton.addEventListener('click', async (event) => {
-            event.preventDefault();
-
-            const email = document.getElementById('rEmail').value.trim();
-            const password = document.getElementById('rPassword').value.trim();
-            const firstName = document.getElementById('rFirstName').value.trim();
-            const lastName = document.getElementById('rLastName').value.trim();
-
-            const validationMessage = validateEmailAndPassword(email, password);
-            if (validationMessage) {
-                showMessage(validationMessage, 'signUpMessage');
-                return;
-            }
-
-            if (!firstName || !lastName) {
-                showMessage("All fields are required.", 'signUpMessage');
-                return;
-            }
-
-            try {
-                const studentCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const student = studentCredential.user;
-
-                const verificationCode = Math.random().toString(36).substring(2, 15);
-
-                const studentData = {
-                    firstName,
-                    lastName,
-                    email,
-                    uid: student.uid,
-                    accountType: "student",
-                    emailVerified: false,
-                    verificationCode
-                };
-
-                await setDoc(doc(db, "students", student.uid), studentData);
-
-                // Send email verification and redirect
-                showMessage("Verification email sent!", 'signUpMessage');
-                await sendEmailVerification(student);
-
-                // Send user data to PHP for registration in the local DB
-                await fetch("../../PHP/verification.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        uid: student.uid,
-                        email,
-                        firstName,
-                        lastName,
-                        verificationCode
-                    })
-                });
-
-                // Sign out the user to block access until verified
-                await signOut(auth);
-
-                // Store email for later use on the verification page
-                localStorage.setItem("pendingVerificationEmail", email);
-
-                // Redirect to verification page
-                window.location.href = `verification.html?uid=${student.uid}`;
-
-            } catch (error) {
-                console.error("Registration error:", error);
-                showMessage("Registration failed. Please try again.", 'signUpMessage');
-            }
-        });
-    }
-
-    // Login Form Logic
+    // Login
     if (loginButton) {
         loginButton.addEventListener('click', async (event) => {
             event.preventDefault();
@@ -176,16 +146,113 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Logout Logic
+    // Logout
     if (logoutButton) {
         logoutButton.addEventListener('click', async () => {
             try {
                 await signOut(auth);
                 localStorage.removeItem("pendingVerificationEmail");
-                window.location.href = "/Student/student-index.html";
+                localStorage.removeItem("tempFirstName");
+                localStorage.removeItem("tempLastName");
+                localStorage.removeItem("tempUID");
+
+                window.location.href = "/Student/student-login.html";
             } catch (error) {
                 console.error("Logout error:", error);
                 showMessage("Logout failed. Please try again.", 'loginMessage');
+            }
+        });
+    }
+
+    // Prefill form fields if temp data exists
+    if (localStorage.getItem("pendingVerificationEmail")) {
+        const email = localStorage.getItem("pendingVerificationEmail");
+        const firstName = localStorage.getItem("tempFirstName");
+        const lastName = localStorage.getItem("tempLastName");
+
+        const emailField = document.getElementById('rEmail');
+        const firstNameField = document.getElementById('rFirstName');
+        const lastNameField = document.getElementById('rLastName');
+
+        if (emailField && firstNameField && lastNameField) {
+            emailField.value = email;
+            firstNameField.value = firstName;
+            lastNameField.value = lastName;
+        }
+    }
+
+    // Final profile completion with password
+    const completeProfileForm = document.getElementById("completeProfileForm");
+    if (completeProfileForm) {
+        completeProfileForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const email = localStorage.getItem("pendingVerificationEmail");
+            const firstName = document.getElementById("rFirstName").value.trim();
+            const lastName = document.getElementById("rLastName").value.trim();
+            const password = document.getElementById("rPassword").value.trim();
+            const confirmPassword = document.getElementById("rConfirmPassword").value.trim();
+
+            if (!email || !firstName || !lastName || !password || !confirmPassword) {
+                showMessage("All fields are required.", 'registerMessage');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showMessage("Passwords do not match.", 'registerMessage');
+                return;
+            }
+
+            try {
+                const user = auth.currentUser;
+
+                if (!user) {
+                    showMessage("No authenticated user found. Please log in again.", 'registerMessage');
+                    return;
+                }
+
+                // Ensure user is authenticated before proceeding
+                if (!user.emailVerified) {
+                    showMessage("Please verify your email first.", 'registerMessage');
+                    return;
+                }
+
+                // Update password
+                await updatePassword(user, password);
+
+                // Update profile display name
+                await updateProfile(user, {
+                    displayName: `${firstName} ${lastName}`
+                });
+
+                // Add user data to Firestore
+                const studentData = {
+                    firstName,
+                    lastName,
+                    email: user.email,
+                    uid: user.uid,
+                    accountType: "student",
+                    emailVerified: user.emailVerified
+                };
+
+                // Save student data in Firestore and check for errors
+                await setDoc(doc(db, "students", user.uid), studentData)
+                    .then(() => {
+                        localStorage.removeItem("pendingVerificationEmail");
+                        localStorage.removeItem("tempFirstName");
+                        localStorage.removeItem("tempLastName");
+                        localStorage.removeItem("tempUID");
+                        showMessage("Profile completed successfully!", 'registerMessage');
+                        window.location.href = "student-dashboard.html";
+                    })
+                    .catch((error) => {
+                        console.error("Firestore error:", error);
+                        showMessage("Error saving profile. Try again.", 'registerMessage');
+                    });
+
+            } catch (error) {
+                console.error("Complete Registration Error:", error);
+                showMessage(error.message, 'registerMessage');
             }
         });
     }
