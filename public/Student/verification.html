@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Verification - Track IO</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, sendEmailVerification, reload } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
+            authDomain: "trackio-f5b07.firebaseapp.com",
+            projectId: "trackio-f5b07",
+            storageBucket: "trackio-f5b07.firebasestorage.app",
+            messagingSenderId: "1083789426923",
+            appId: "1:1083789426923:web:c372749a28e84ff9cd7eae",
+            measurementId: "G-DSPVFG2CYW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const emailSpan = document.getElementById("user-email");
+        const resendBtn = document.getElementById("resend-verification");
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Show user email
+                emailSpan.textContent = user.email;
+
+                // Start polling for verification
+                const interval = setInterval(async () => {
+                    await reload(user); // Refresh user status
+                    if (user.emailVerified) {
+                        clearInterval(interval);
+                        window.location.href = "student-dashboard.html";
+                    }
+                }, 3000); // Check every 3 seconds
+
+                resendBtn.addEventListener("click", async () => {
+                    try {
+                        await sendEmailVerification(user);
+                        alert("Verification email resent.");
+                    } catch (error) {
+                        console.error("Error resending email:", error);
+                    }
+                });
+            } else {
+                window.location.href = "student-index.html"; // Not logged in
+            }
+        });
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: #fff;
+            text-align: center;
+            padding: 50px;
+        }
+        .box {
+            max-width: 400px;
+            margin: auto;
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        button {
+            padding: 10px 20px;
+            background: #ff6f00;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #ff8800;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>Verify Your Account 📧</h2>
+        <p>A verification link will be sent to:</p>
+        <p><strong id="user-email">Loading...</strong></p>
+        <p>Once verified, you'll be redirected automatically to your dashboard.</p>
+        <button id="resend-verification">Send Verification To Your Email</button>
+    </div>
+</body>
+</html>

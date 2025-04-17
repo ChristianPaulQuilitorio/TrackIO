@@ -1,7 +1,7 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import {getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, signOut, onAuthStateChanged, sendEmailVerification} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -19,16 +19,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Set persistence to local (persists even after the browser is closed)
+// Set persistence to local
 setPersistence(auth, browserLocalPersistence)
-    .then(() => {
-        console.log("Authentication state persistence set to local.");
-    })
-    .catch((error) => {
-        console.error("Error setting persistence:", error);
-    });
+    .then(() => console.log("Persistence set"))
+    .catch((error) => console.error("Persistence error:", error));
 
-// Function to display messages
 function showMessage(message, divId) {
     const messageDiv = document.getElementById(divId);
     if (messageDiv) {
@@ -40,33 +35,44 @@ function showMessage(message, divId) {
     }
 }
 
-// Handle authentication state
+// Common form validation function
+function validateEmailAndPassword(email, password) {
+    if (!email || !password) {
+        return "Email and password are required.";
+    }
+    if (password.length < 6) {
+        return "Password must be at least 6 characters long.";
+    }
+    return null;
+}
+
+// Authentication state handler
 onAuthStateChanged(auth, (student) => {
     const currentPath = window.location.pathname;
 
     if (!student) {
-        console.log("No authenticated student found.");
-        if (currentPath !== "/Student/student-index.html") {
-            window.location.href = "/Student/student-index.html"; // Redirect to login page
+        if (!currentPath.includes("student-index.html") && !currentPath.includes("verification.html")) {
+            window.location.href = "student-index.html";
         }
     } else {
-        console.log("Student is authenticated:", student);
-
-        if (currentPath === "/Student/student-index.html") {
-            window.location.href = "/Student/student-dashboard.html"; // Redirect to dashboard
-        } else if (currentPath === "/Student/student-dashboard.html") {
-            loadStudentProfile(student);
+        if (!student.emailVerified) {
+            if (!currentPath.includes("verification.html")) {
+                window.location.href = "verification.html";
+            }
+        } else {
+            if (currentPath.includes("student-index.html")) {
+                window.location.href = "student-dashboard.html";
+            }
         }
     }
 });
 
-// Event listener for registration and login
+// Register Form Logic
 document.addEventListener('DOMContentLoaded', () => {
     const signUpButton = document.getElementById('submitSignUp');
     const loginButton = document.getElementById('submitLogin');
     const logoutButton = document.getElementById('logout-button');
 
-    // Student Registration
     if (signUpButton) {
         signUpButton.addEventListener('click', async (event) => {
             event.preventDefault();
@@ -76,13 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const firstName = document.getElementById('rFirstName').value.trim();
             const lastName = document.getElementById('rLastName').value.trim();
 
-            if (!email || !password || !firstName || !lastName) {
-                showMessage("All fields are required.", 'signUpMessage');
+            const validationMessage = validateEmailAndPassword(email, password);
+            if (validationMessage) {
+                showMessage(validationMessage, 'signUpMessage');
                 return;
             }
 
-            if (password.length < 6) {
-                showMessage("Password must be at least 6 characters long.", 'signUpMessage');
+            if (!firstName || !lastName) {
+                showMessage("All fields are required.", 'signUpMessage');
                 return;
             }
 
@@ -90,38 +97,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 const studentCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const student = studentCredential.user;
 
-                console.log("Student registered successfully:", student);
+                const verificationCode = Math.random().toString(36).substring(2, 15);
 
-                // Save user data in the "students" collection
                 const studentData = {
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: email,
+                    firstName,
+                    lastName,
+                    email,
                     uid: student.uid,
                     accountType: "student",
+                    emailVerified: false,
+                    verificationCode
                 };
 
-                await setDoc(doc(db, "students", student.uid), studentData); // Ensure it uses the "students" collection
-                console.log("Student document created successfully in Firestore.");
+                await setDoc(doc(db, "students", student.uid), studentData);
 
-                showMessage("Registration successful! Redirecting...", 'signUpMessage');
-                setTimeout(() => {
-                    window.location.href = "student-dashboard.html";
-                }, 2000);
+                // Send email verification and redirect
+                showMessage("Verification email sent!", 'signUpMessage');
+                await sendEmailVerification(student);
+
+                // Send user data to PHP for registration in the local DB
+                await fetch("../../PHP/verification.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        uid: student.uid,
+                        email,
+                        firstName,
+                        lastName,
+                        verificationCode
+                    })
+                });
+
+                // Sign out the user to block access until verified
+                await signOut(auth);
+
+                // Store email for later use on the verification page
+                localStorage.setItem("pendingVerificationEmail", email);
+
+                // Redirect to verification page
+                window.location.href = `verification.html?uid=${student.uid}`;
+
             } catch (error) {
-                console.error("Error during registration:", error);
-                const errorMessages = {
-                    'auth/email-already-in-use': "This email is already registered.",
-                    'auth/invalid-email': "Please enter a valid email address.",
-                    'auth/weak-password': "Password must be at least 6 characters long.",
-                    'auth/network-request-failed': "Network error. Please try again later."
-                };
-                showMessage(errorMessages[error.code] || "Registration failed. Please try again.", 'signUpMessage');
+                console.error("Registration error:", error);
+                showMessage("Registration failed. Please try again.", 'signUpMessage');
             }
         });
     }
 
-    // Student Login
+    // Login Form Logic
     if (loginButton) {
         loginButton.addEventListener('click', async (event) => {
             event.preventDefault();
@@ -129,71 +152,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('lEmail').value.trim();
             const password = document.getElementById('lPassword').value.trim();
 
-            if (!email || !password) {
-                showMessage("Please enter both email and password.", 'loginMessage');
+            const validationMessage = validateEmailAndPassword(email, password);
+            if (validationMessage) {
+                showMessage(validationMessage, 'loginMessage');
                 return;
             }
 
             try {
-                console.log("Attempting to log in...");
                 const studentCredential = await signInWithEmailAndPassword(auth, email, password);
                 const student = studentCredential.user;
 
-                console.log("Student logged in successfully:", student);
-
-                const studentDocRef = doc(db, "students", student.uid);
-                const studentDoc = await getDoc(studentDocRef);
-
-                if (studentDoc.exists()) {
-                    const studentData = studentDoc.data();
-                    const studentName = `${studentData.firstName} ${studentData.lastName}`;
-
-                    console.log("Student data retrieved:", studentData);
-
-                    showMessage(`Welcome back, ${studentName}! Redirecting...`, 'loginMessage');
-                    setTimeout(() => {
-                        window.location.href = "student-dashboard.html";
-                    }, 2000);
-                } else {
-                    console.warn("Student document does not exist. Creating a new document...");
-                    await setDoc(studentDocRef, {
-                        firstName: student.firstName,
-                        lastName: student.lastName,
-                        email: student.email,
-                        uid: student.uid,
-                        accountType: "student"
-                    });
-
-                    showMessage("Welcome! Your profile has been created. Redirecting...", 'loginMessage');
-                    setTimeout(() => {
-                        window.location.href = "student-dashboard.html";
-                    }, 2000);
+                if (!student.emailVerified) {
+                    await signOut(auth);
+                    showMessage("Please verify your email before logging in.", 'loginMessage');
+                    return;
                 }
+
+                window.location.href = "student-dashboard.html";
             } catch (error) {
-                console.error("Error during login:", error);
-                const errorMessages = {
-                    'auth/user-not-found': "No user found with this email.",
-                    'auth/wrong-password': "Incorrect password. Please try again.",
-                    'auth/invalid-email': "Invalid email address. Please check and try again.",
-                    'auth/too-many-requests': "Too many failed login attempts. Please try again later."
-                };
-                showMessage(errorMessages[error.code] || `Login failed: ${error.message}`, 'loginMessage');
+                console.error("Login error:", error);
+                showMessage("Login failed. Please try again.", 'loginMessage');
             }
         });
     }
 
-    // Student Logout
+    // Logout Logic
     if (logoutButton) {
         logoutButton.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                console.log("Student user logged out successfully.");
-                window.location.href = "/Student/student-index.html"; // Redirect to login page
+                localStorage.removeItem("pendingVerificationEmail");
+                window.location.href = "/Student/student-index.html";
             } catch (error) {
-                console.error("Error logging out:", error);
-                showMessage("Failed to log out. Please try again.", 'logoutMessage');
+                console.error("Logout error:", error);
+                showMessage("Logout failed. Please try again.", 'loginMessage');
             }
         });
     }
 });
-
