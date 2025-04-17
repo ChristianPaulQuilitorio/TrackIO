@@ -41,7 +41,7 @@
     <!-- Navigation Bar -->
 
     <nav class="navbar">
-        <a href="student-dashboard.html" class="nav-item" aria-label="Company Finder">
+        <a href="student-dashboard.html" class="nav-item" aria-label="Student Dashboard">
             <img src="../img/Student-dashboard.jpg" alt="Student Dashboard Icon">
             <span>Student Dashboard</span>
         </a>
@@ -49,6 +49,7 @@
             <img src="../img/Company-Finder.png" alt="Company Finder Icon">
             <span>Company Finder</span>
         </a>
+      
         <a href="work-details.html" class="nav-item" aria-label="Work Details">
             <img src="../img/Work-Details.png" alt="Work Details Icon">
             <span>Work Details</span>
@@ -65,35 +66,15 @@
 
     <!-- Check-In Container -->
     <div class="check-in-container">
-        <!-- Placeholder for displaying remaining hours -->
         <div class="remaining-hours">
-            <p>Remaining Hours: <span id="dashboard-remaining-hours">200</span> hours</p>
+            <label for="remaining-hours-input">Remaining Hours:</label>
+            <input type="number" id="remaining-hours-input" value="200" />
+            <button id="save-remaining-hours">Save</button>
         </div>
-        <input type="text" id="start-time" placeholder="Check-In Time" readonly />
-        <input type="text" id="end-time" placeholder="Check-Out Time" readonly />
-        <button id="check-in-button">Check In</button>
     </div>
 
-    <!-- Calendar Container -->
-    <div id="calendar-container">
-        <div id="calendar"></div>
-    </div>
-
-
-    <!-- Geolocation Container -->
-    <div class="geolocation-container">
-        <h3>Your Current Location:</h3>
-        <p id="location">Fetching location...</p>
-        <div id="map" style="width: 100%; height: 300px; border: 1px solid #ddd;"></div>
-    </div>
-
-    <!-- Leaflet.js JavaScript -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- FullCalendar JS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script type="module" src="student-script.js"></script> <!-- Link to external JavaScript -->
     <script type="module">
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
         const db = getFirestore();
@@ -114,36 +95,47 @@
             }
         }
 
-        function updateRemainingHoursDisplay(remainingHours) {
-            document.getElementById('dashboard-remaining-hours').textContent = remainingHours;
+        async function saveRemainingHours(userDocRef, remainingHours) {
+            try {
+                await setDoc(userDocRef, { remainingHours }, { merge: true });
+                alert('Remaining hours saved successfully!');
+
+                // Notify the dashboard to fetch the updated remaining hours
+                localStorage.setItem('remainingHoursUpdated', 'true');
+            } catch (error) {
+                console.error('Error saving remaining hours:', error);
+                alert('Failed to save remaining hours. Please try again later.');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     const userDocRef = doc(db, 'students', user.uid);
+                    const remainingHoursInput = document.getElementById('remaining-hours-input');
 
                     const remainingHours = await fetchRemainingHours(userDocRef);
-                    updateRemainingHoursDisplay(remainingHours);
+                    remainingHoursInput.value = remainingHours;
+
+                    document.getElementById('save-remaining-hours').addEventListener('click', async () => {
+                        const remainingHours = parseInt(remainingHoursInput.value, 10);
+                        if (isNaN(remainingHours) || remainingHours < 0) {
+                            alert('Please enter a valid number for remaining hours.');
+                            return;
+                        }
+                        await saveRemainingHours(userDocRef, remainingHours);
+                    });
                 } else {
                     alert('No user is signed in. Please log in.');
                 }
             });
-
-            // Listen for updates from work-details.html
-            window.addEventListener('storage', (event) => {
-                if (event.key === 'remainingHoursUpdated' && event.newValue === 'true') {
-                    localStorage.removeItem('remainingHoursUpdated');
-                    onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            const userDocRef = doc(db, 'students', user.uid);
-                            const remainingHours = await fetchRemainingHours(userDocRef);
-                            updateRemainingHoursDisplay(remainingHours);
-                        }
-                    });
-                }
-            });
         });
     </script>
+
+    <!-- Leaflet.js JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script type="module" src="student-script.js"></script> <!-- Link to external JavaScript -->
 </body>
 </html>

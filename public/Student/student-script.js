@@ -2,7 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebas
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-
 const firebaseConfig = {
     apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
     authDomain: "trackio-f5b07.firebaseapp.com",
@@ -11,80 +10,82 @@ const firebaseConfig = {
     messagingSenderId: "1083789426923",
     appId: "1:1083789426923:web:c372749a28e84ff9cd7eae",
     measurementId: "G-DSPVFG2CYW"
-    
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Consolidate Firestore initialization
+const db = getFirestore(initializeApp(firebaseConfig));
+const auth = getAuth();
 
-// Initialize Firestore and reference the 'students' collection
-const studentsCollectionRef = collection(db, "students");
-
-// Function to fetch all students from the 'students' collection
-async function fetchAllStudents() {
+// Reusable function to fetch Firestore documents
+async function fetchCollectionDocs(collectionName) {
     try {
-        const studentsCollection = collection(db, "students");
-        const querySnapshot = await getDocs(studentsCollection);
-        querySnapshot.forEach((doc) => {
-            console.log(`Student ID: ${doc.id}, Data:`, doc.data());
-        });
+        const collectionRef = collection(db, collectionName);
+        const querySnapshot = await getDocs(collectionRef);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
-        console.error("Error fetching students from Firestore:", error);
+        console.error(`Error fetching documents from ${collectionName}:`, error);
+        throw new Error(`Failed to fetch data from ${collectionName}`);
     }
 }
 
-// Function to get the current date in YYYY-MM-DD format based on the local timezone
-function getCurrentDate() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+// Enhanced function to fetch all students
+async function fetchAllStudents() {
+    try {
+        const students = await fetchCollectionDocs("students");
+        students.forEach(student => {
+            console.log(`Student ID: ${student.id}, Data:`, student);
+        });
+    } catch (error) {
+        console.error("Error fetching students:", error);
+    }
 }
 
-// Helper function to convert 12-hour time (with AM/PM) to 24-hour time
+// Improved date formatting function
+function getCurrentDate() {
+    return new Date().toISOString().split('T')[0]; // Returns YYYY-MM-DD
+}
+
+// Enhanced 12-hour to 24-hour time conversion
 function convertTo24HourFormat(time12h) {
     const [time, modifier] = time12h.split(' ');
     let [hours, minutes] = time.split(':');
-    if (modifier === 'PM' && hours !== '12') {
-        hours = parseInt(hours, 10) + 12;
-    }
-    if (modifier === 'AM' && hours === '12') {
-        hours = '00';
-    }
+    hours = modifier === 'PM' && hours !== '12' ? parseInt(hours, 10) + 12 : hours;
+    hours = modifier === 'AM' && hours === '12' ? '00' : hours;
     return `${hours}:${minutes}`;
 }
 
 // Example usage of the fetchAllStudents function
 fetchAllStudents();
 
-// Example: Add interactivity to the navigation bar
-document.addEventListener('DOMContentLoaded', () => {
+// Improved navigation interactivity
+function setupNavbar() {
     const navbarLinks = document.querySelectorAll('.navbar a');
     const burgerButton = document.querySelector('.burger-button');
     const navbar = document.querySelector('.navbar');
 
     navbarLinks.forEach(link => {
-        link.addEventListener('click', (event) => {
+        link.addEventListener('click', event => {
             console.log(`Navigating to: ${event.target.getAttribute('href')}`);
         });
     });
 
-    // Toggle navbar visibility when the burger button is clicked
-    burgerButton.addEventListener('click', (event) => {
-        navbar.classList.toggle('visible'); // Toggle the visibility of the navbar
-        event.stopPropagation(); // Prevent the click from propagating to the document
+    burgerButton.addEventListener('click', event => {
+        navbar.classList.toggle('visible');
+        event.stopPropagation();
     });
 
-    // Hide the navbar when clicking outside of it
-    document.addEventListener('click', (event) => {
+    document.addEventListener('click', event => {
         if (!navbar.contains(event.target) && !burgerButton.contains(event.target)) {
-            navbar.classList.remove('visible'); // Hide the navbar
+            navbar.classList.remove('visible');
         }
     });
+}
 
+// Initialize navbar interactivity
+setupNavbar();
+
+// Example: Add interactivity to the navigation bar
+document.addEventListener('DOMContentLoaded', () => {
     const notificationIcon = document.getElementById('notification-icon');
     const notificationPopup = document.getElementById('notification-popup');
 
