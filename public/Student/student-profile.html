@@ -56,19 +56,58 @@
     <div class="profile-container">
         <h1>Student Profile</h1>
         <p><strong>Email:</strong> <span id="profile-email">Loading...</span></p>
-        <p>
-            <strong>First Name:</strong>
+
+        <p><strong>First Name:</strong>
             <input type="text" id="profile-first-name" placeholder="Enter first name" />
         </p>
-        <p>
-            <strong>Last Name:</strong>
+
+        <p><strong>Last Name:</strong>
             <input type="text" id="profile-last-name" placeholder="Enter last name" />
         </p>
-        <p>
-            <strong>Profile Photo:</strong>
-            <input type="file" id="photo-upload" accept="image/*" />
-            <img id="profile-photo" src="../img/sample-profile.jpg" alt="Profile Photo" style="width: 100px; height: 100px;"/>
+
+        <p><strong>Middle Name:</strong>
+            <input type="text" id="profile-middle-name" placeholder="Enter middle name" />
         </p>
+
+        <p><strong>Contact Number:</strong>
+            <input type="text" id="profile-contact-number" placeholder="Enter contact number" />
+        </p>
+
+        <p><strong>Date of Birth:</strong>
+            <input type="date" id="profile-date-of-birth" />
+        </p>
+
+        <p><strong>College School Name:</strong>
+            <input type="text" id="profile-college-school-name" placeholder="Enter college/school name" />
+        </p>
+
+        <p><strong>Age:</strong>
+            <input type="number" id="profile-age" placeholder="Enter age" />
+        </p>
+
+        <p><strong>Sex:</strong>
+            <select id="profile-sex">
+                <option value="">-- Select --</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Non-Binary">Non-Binary</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+        </p>
+
+        <p><strong>College / Program:</strong>
+            <input type="text" id="profile-college-program" placeholder="e.g., CCS / BSIT" />
+        </p>
+
+        <p><strong>Year Level:</strong>
+            <input type="text" id="profile-year-level" placeholder="Enter year level" />
+        </p>
+
+        <p><strong>Profile Photo:</strong>
+            <input type="file" id="photo-upload" accept="image/*" />
+            <img id="profile-photo" src="../img/sample-profile.jpg" alt="Profile Photo" style="width: 100px; height: 100px;" />
+        </p>
+
         <button id="save-profile-button">Save</button>
         <button id="logout-button">Logout</button>
     </div>

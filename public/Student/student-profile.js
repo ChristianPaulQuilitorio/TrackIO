@@ -1,25 +1,21 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
     authDomain: "trackio-f5b07.firebaseapp.com",
     projectId: "trackio-f5b07",
-    storageBucket: "trackio-f5b07.appspot.com", // Corrected bucket name
+    storageBucket: "trackio-f5b07.appspot.com",
     messagingSenderId: "1083789426923",
     appId: "1:1083789426923:web:c372749a28e84ff9cd7eae",
     measurementId: "G-DSPVFG2CYW"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
-// Function to load and display the student's profile
 async function loadStudentProfile(user) {
     try {
         const studentDocRef = doc(db, "students", user.uid);
@@ -27,12 +23,25 @@ async function loadStudentProfile(user) {
 
         if (studentDoc.exists()) {
             const studentData = studentDoc.data();
+
             document.getElementById("profile-first-name").value = studentData.firstName || "";
             document.getElementById("profile-last-name").value = studentData.lastName || "";
             document.getElementById("profile-email").textContent = studentData.email;
 
-            // Load profile photo
-            const profilePhoto = studentData.profilePhoto || "../img/sample-profile.jpg";
+            // New fields
+            document.getElementById("profile-middle-name").value = studentData.middleName || "";
+            document.getElementById("profile-contact-number").value = studentData.contactNumber || "";
+            document.getElementById("profile-date-of-birth").value = studentData.dateOfBirth || "";
+            document.getElementById("profile-college-school-name").value = studentData.collegeSchoolName || "";
+            document.getElementById("profile-age").value = studentData.age || "";
+            document.getElementById("profile-sex").value = studentData.sex || "";
+            document.getElementById("profile-college-program").value = studentData.collegeProgram || "";
+            document.getElementById("profile-year-level").value = studentData.yearLevel || "";
+
+            const profilePhoto = studentData.profile_pic
+                ? `http://localhost/TrackIO/${studentData.profile_pic}`
+                : "../img/sample-profile.jpg";
+
             document.getElementById("profile-photo").src = profilePhoto;
 
             console.log("Student profile loaded successfully:", studentData);
@@ -48,6 +57,14 @@ async function updateStudentProfile(user) {
     try {
         const firstName = document.getElementById("profile-first-name").value.trim();
         const lastName = document.getElementById("profile-last-name").value.trim();
+        const middleName = document.getElementById("profile-middle-name").value.trim();
+        const contactNumber = document.getElementById("profile-contact-number").value.trim();
+        const dateOfBirth = document.getElementById("profile-date-of-birth").value;
+        const collegeSchoolName = document.getElementById("profile-college-school-name").value.trim();
+        const age = document.getElementById("profile-age").value;
+        const sex = document.getElementById("profile-sex").value;
+        const collegeProgram = document.getElementById("profile-college-program").value.trim();
+        const yearLevel = document.getElementById("profile-year-level").value.trim();
         const photoFile = document.getElementById("photo-upload").files[0];
 
         if (!firstName || !lastName) {
@@ -57,64 +74,91 @@ async function updateStudentProfile(user) {
 
         const studentDocRef = doc(db, "students", user.uid);
 
-        // Update Firestore with the new names
         await updateDoc(studentDocRef, {
-            firstName: firstName,
-            lastName: lastName
+            firstName,
+            lastName,
+            middleName,
+            contactNumber,
+            dateOfBirth,
+            collegeSchoolName,
+            age,
+            sex,
+            collegeProgram,
+            yearLevel
         });
 
-        // Handle photo upload if a file is selected
+        // If photo file exists, upload it
         if (photoFile) {
             const formData = new FormData();
             formData.append("file", photoFile);
+            formData.append("uid", user.uid);
+            formData.append("firstName", firstName);
+            formData.append("lastName", lastName);
+            formData.append("middleName", middleName);
+            formData.append("contactNo", contactNumber);
+            formData.append("dob", dateOfBirth);
+            formData.append("collegeName", collegeSchoolName);
+            formData.append("age", age);
+            formData.append("sex", sex);
+            formData.append("collegeProgram", collegeProgram);
+            formData.append("yearLevel", yearLevel);
+            
 
-            const response = await fetch("https://<YOUR_REGION>-<YOUR_PROJECT_ID>.cloudfunctions.net/uploadProfilePhoto", {
+            const response = await fetch("http://localhost/TrackIO/PHP/upload-profile.php", {
                 method: "POST",
-                body: formData,
+                body: formData
             });
 
-            if (!response.ok) {
-                throw new Error("Failed to upload photo");
+            const textResponse = await response.text();
+            console.log("Response from PHP backend:", textResponse);
+
+            try {
+                const result = JSON.parse(textResponse);
+                if (!result.success) {
+                    throw new Error(result.error || "Unknown error from PHP backend");
+                }
+
+                const relativePath = result.filePath;
+
+                // Update Firestore document with the uploaded profile picture's relative path
+                await updateDoc(studentDocRef, {
+                    profile_pic: relativePath
+                });
+
+                // Optionally update the profile photo on the page as well
+                document.getElementById("profile-photo").src = `http://localhost/TrackIO/${relativePath}`;
+            } catch (jsonError) {
+                console.error("Error parsing JSON:", jsonError);
+                throw new Error("Failed to parse JSON response from PHP backend.");
             }
-
-            const { photoURL } = await response.json();
-
-            // Update Firestore with the new photo URL
-            await updateDoc(studentDocRef, {
-                profilePhoto: photoURL
-            });
         }
 
         alert("Profile updated successfully!");
-        loadStudentProfile(user); // Reload the profile data
     } catch (error) {
         console.error("Error updating student profile:", error);
         alert("Failed to update profile. Please try again.");
     }
 }
 
-// Monitor authentication state
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        console.log("User  is authenticated:", user);
-        loadStudentProfile(user); // Load the student's profile
+        console.log("User is authenticated:", user);
+        loadStudentProfile(user);
 
-        // Attach event listener to the save button
         document.getElementById("save-profile-button").addEventListener("click", () => {
             updateStudentProfile(user);
         });
     } else {
         console.log("No authenticated user found. Redirecting to login page...");
-        window.location.href = "/Student/student-index.html"; // Redirect to login page
+        window.location.href = "/Student/student-login.html";
     }
 });
 
-// Logout functionality
 document.getElementById("logout-button").addEventListener("click", async () => {
     try {
         await signOut(auth);
-        console.log("User  logged out successfully.");
-        window.location.href = "/Student/student-index.html"; // Redirect to login page
+        console.log("User logged out successfully.");
+        window.location.href = "/Student/student-login.html";
     } catch (error) {
         console.error("Error logging out:", error);
         alert("Failed to log out. Please try again.");
