@@ -4,42 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard</title>
-    <link rel="stylesheet" href="student-style.css"> <!-- Link to external CSS -->
-    <!-- Leaflet.js CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- FullCalendar CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+    <title>Work Details</title>
+    <link rel="stylesheet" href="student-style.css">
 </head>
+
 <body>
     <header class="main-header">
-        <button class="burger-button" aria-label="Toggle Navigation">
-            ☰
-        </button>
+        <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
-            <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
-                <img src="../img/notification.png" alt="Notification Icon">
-            </a>
             <a href="student-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
-            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button> <!-- Logout Button -->
+            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button> 
         </nav>
     </header>
 
-    <!-- Notification Pop-Up -->
-    <div class="notification-popup hidden" id="notification-popup"></div>
-
-    <!-- User Info Section -->
     <div class="user-info" style="text-align: center; margin-top: 10px;">
-        <h2>Welcome, <span id="user-name">Guest</span></h2>
-        <p>Email: <span id="user-email">Not Available</span></p>
+        <h2>Work Details</h2>
+        <p>Update your remaining work hours below.</p>
     </div>
 
-  
-
     <!-- Navigation Bar -->
-
     <nav class="navbar">
         <a href="student-dashboard.html" class="nav-item" aria-label="Student Dashboard">
             <img src="../img/Student-dashboard.jpg" alt="Student Dashboard Icon">
@@ -49,7 +34,6 @@
             <img src="../img/Company-Finder.png" alt="Company Finder Icon">
             <span>Company Finder</span>
         </a>
-      
         <a href="work-details.html" class="nav-item" aria-label="Work Details">
             <img src="../img/Work-Details.png" alt="Work Details Icon">
             <span>Work Details</span>
@@ -74,68 +58,65 @@
     </div>
 
     <script type="module">
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-        const db = getFirestore();
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
+            authDomain: "trackio-f5b07.firebaseapp.com",
+            projectId: "trackio-f5b07",
+            storageBucket: "trackio-f5b07.appspot.com",
+            messagingSenderId: "1083789426923",
+            appId: "1:1083789426923:web:c372749a28e84ff9cd7eae"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
         const auth = getAuth();
 
-        async function fetchRemainingHours(userDocRef) {
+        // Save remaining hours to Firestore
+        async function saveRemainingHoursToFirestore(userId, remainingHours) {
             try {
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    return userDoc.data().remainingHours || 0;
-                } else {
-                    return 0; // Default to 0 for new accounts
-                }
+                await setDoc(doc(db, "students", userId), { remainingHours }, { merge: true });
+                alert("Remaining hours saved successfully!");
+
+                // Save to localStorage to notify student-dashboard.html
+                localStorage.setItem("updatedRemainingHours", remainingHours);
             } catch (error) {
-                console.error('Error fetching remaining hours:', error);
-                alert('Failed to fetch remaining hours. Please try again later.');
-                return 0;
+                console.error("Error saving remaining hours: ", error);
+                alert("Error saving remaining hours. Please try again.");
             }
         }
 
-        async function saveRemainingHours(userDocRef, remainingHours) {
-            try {
-                await setDoc(userDocRef, { remainingHours }, { merge: true });
-                alert('Remaining hours saved successfully!');
-
-                // Notify the dashboard to fetch the updated remaining hours
-                localStorage.setItem('remainingHoursUpdated', 'true');
-            } catch (error) {
-                console.error('Error saving remaining hours:', error);
-                alert('Failed to save remaining hours. Please try again later.');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            onAuthStateChanged(auth, async (user) => {
+        // Get authenticated user and listen to changes
+        function getAuthenticatedUser(callback) {
+            onAuthStateChanged(auth, (user) => {
                 if (user) {
-                    const userDocRef = doc(db, 'students', user.uid);
-                    const remainingHoursInput = document.getElementById('remaining-hours-input');
-
-                    const remainingHours = await fetchRemainingHours(userDocRef);
-                    remainingHoursInput.value = remainingHours;
-
-                    document.getElementById('save-remaining-hours').addEventListener('click', async () => {
-                        const remainingHours = parseInt(remainingHoursInput.value, 10);
-                        if (isNaN(remainingHours) || remainingHours < 0) {
-                            alert('Please enter a valid number for remaining hours.');
-                            return;
-                        }
-                        await saveRemainingHours(userDocRef, remainingHours);
-                    });
+                    callback(user);
                 } else {
-                    alert('No user is signed in. Please log in.');
+                    alert("No user is signed in. Please log in.");
                 }
+            });
+        }
+
+        // Handle Save button for remaining hours
+        const saveButton = document.getElementById("save-remaining-hours");
+        saveButton.addEventListener("click", async () => {
+            getAuthenticatedUser(async (user) => {
+                const remainingHours = parseFloat(document.getElementById("remaining-hours-input").value);
+                if (isNaN(remainingHours) || remainingHours < 0) {
+                    alert("Please enter a valid number for remaining hours.");
+                    return;
+                }
+
+                // Save remaining hours to Firestore and localStorage
+                await saveRemainingHoursToFirestore(user.uid, remainingHours);
             });
         });
     </script>
-
-    <!-- Leaflet.js JavaScript -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- FullCalendar JS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script type="module" src="student-script.js"></script> <!-- Link to external JavaScript -->
 </body>
+
 </html>

@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
 
-// Debounce function to limit the rate of function execution
+// Utility
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
@@ -27,7 +27,7 @@ function debounce(func, wait) {
     };
 }
 
-// Reusable function to get the authenticated user
+// Get current user
 function getAuthenticatedUser(callback) {
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -38,62 +38,111 @@ function getAuthenticatedUser(callback) {
     });
 }
 
-// Function to save remaining hours to Firestore
+// Firestore: Save remaining hours
 async function saveRemainingHoursToFirestore(userId, remainingHours) {
     try {
-        await setDoc(doc(db, "students", userId), { remainingHours });
+        await setDoc(doc(db, "students", userId), { remainingHours }, { merge: true });
         alert("Remaining hours saved successfully!");
     } catch (error) {
         console.error("Error saving remaining hours: ", error);
     }
 }
 
-// Function to fetch remaining hours from Firestore
+// Firestore: Fetch remaining hours
 async function fetchRemainingHoursFromFirestore(userId) {
     try {
         const docRef = doc(db, "students", userId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-            return docSnap.data().remainingHours;
+            return docSnap.data().remainingHours || 200;
         } else {
-            console.log("No such document!");
-            return 200; // Default value
+            return 200;
         }
     } catch (error) {
         console.error("Error fetching remaining hours: ", error);
-        return 200; // Default value
+        return 200;
     }
 }
 
-// Fetch remaining hours on page load
-window.addEventListener('load', () => {
-    getAuthenticatedUser(async (user) => {
-        const userId = user.uid; // Get the authenticated user's unique ID
-        const remainingHours = await fetchRemainingHoursFromFirestore(userId);
+// Firestore: Save check-in timestamp
+async function checkIn(userId) {
+    try {
+        await setDoc(doc(db, "students", userId), {
+            checkIn: Date.now()
+        }, { merge: true });
+        alert("Checked in successfully.");
+    } catch (error) {
+        console.error("Error during check-in:", error);
+    }
+}
 
-        const remainingHoursInput = document.getElementById('remaining-hours-input');
-        remainingHoursInput.value = remainingHours;
+// Firestore: Handle check-out and deduct time
+async function checkOut(userId) {
+    try {
+        const docRef = doc(db, "students", userId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            const checkInTime = data.checkIn;
+
+            if (!checkInTime) {
+                alert("You haven't checked in yet.");
+                return;
+            }
+
+            const now = Date.now();
+            const durationMs = now - checkInTime;
+            const hoursWorked = durationMs / (1000 * 60 * 60);
+
+            const updatedHours = Math.max(0, (data.remainingHours || 200) - hoursWorked);
+
+            await setDoc(docRef, {
+                remainingHours: updatedHours,
+                checkIn: null
+            }, { merge: true });
+
+            alert(`Checked out. You worked for ${hoursWorked.toFixed(2)} hours.`);
+        }
+    } catch (error) {
+        console.error("Error during check-out:", error);
+    }
+}
+
+// Load remaining hours on page load
+window.addEventListener("load", () => {
+    getAuthenticatedUser(async (user) => {
+        const userId = user.uid;
+        const remainingHours = await fetchRemainingHoursFromFirestore(userId);
+        document.getElementById("remaining-hours-input").value = remainingHours;
     });
 });
 
-// Event listener for save button with debounce and validation
-const saveButton = document.getElementById('save-remaining-hours');
-saveButton.addEventListener('click', debounce(() => {
+// Save remaining hours
+const saveButton = document.getElementById("save-remaining-hours");
+saveButton.addEventListener("click", debounce(() => {
     getAuthenticatedUser(async (user) => {
-        const userId = user.uid; // Get the authenticated user's unique ID
-        const remainingHoursInput = document.getElementById('remaining-hours-input');
-        const remainingHours = parseInt(remainingHoursInput.value, 10);
-
+        const remainingHours = parseFloat(document.getElementById("remaining-hours-input").value);
         if (isNaN(remainingHours) || remainingHours < 0) {
             alert("Please enter a valid number for remaining hours.");
             return;
         }
 
-        try {
-            await saveRemainingHoursToFirestore(userId, remainingHours);
-        } catch (error) {
-            alert("Failed to save remaining hours. Please try again later.");
-        }
+        await saveRemainingHoursToFirestore(user.uid, remainingHours);
     });
 }, 300));
+
+// Check-In button listener
+document.getElementById("check-in-btn").addEventListener("click", () => {
+    getAuthenticatedUser(async (user) => {
+        await checkIn(user.uid);
+    });
+});
+
+// Check-Out button listener
+document.getElementById("check-out-btn").addEventListener("click", () => {
+    getAuthenticatedUser(async (user) => {
+        await checkOut(user.uid);
+    });
+});

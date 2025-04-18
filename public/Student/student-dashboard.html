@@ -11,11 +11,14 @@
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
 </head>
+
 <body>
+    <div id="countdown-container">
+        <p>Remaining Time: <span id="countdown-display">Loading...</span></p>
+    </div>
+
     <header class="main-header">
-        <button class="burger-button" aria-label="Toggle Navigation">
-            ☰
-        </button>
+        <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
             <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
                 <img src="../img/notification.png" alt="Notification Icon">
@@ -36,12 +39,9 @@
         <p>Email: <span id="user-email">Not Available</span></p>
     </div>
 
-  
-
     <!-- Navigation Bar -->
-
     <nav class="navbar">
-        <a href="student-dashboard.html" class="nav-item" aria-label="Company Finder">
+        <a href="student-dashboard.html" class="nav-item" aria-label="Student Dashboard">
             <img src="../img/Student-dashboard.jpg" alt="Student Dashboard Icon">
             <span>Student Dashboard</span>
         </a>
@@ -65,7 +65,6 @@
 
     <!-- Check-In Container -->
     <div class="check-in-container">
-        <!-- Placeholder for displaying remaining hours -->
         <div class="remaining-hours">
             <p>Remaining Hours: <span id="dashboard-remaining-hours">200</span> hours</p>
         </div>
@@ -78,7 +77,6 @@
     <div id="calendar-container">
         <div id="calendar"></div>
     </div>
-
 
     <!-- Geolocation Container -->
     <div class="geolocation-container">
@@ -99,30 +97,32 @@
         const db = getFirestore();
         const auth = getAuth();
 
+        // Fetch the remaining hours from Firestore
         async function fetchRemainingHours(userDocRef) {
             try {
                 const userDoc = await getDoc(userDocRef);
                 if (userDoc.exists()) {
                     return userDoc.data().remainingHours || 0;
-                } else {
-                    return 0; // Default to 0 for new accounts
                 }
+                return 0; // Default to 0 if data doesn't exist
             } catch (error) {
                 console.error('Error fetching remaining hours:', error);
                 alert('Failed to fetch remaining hours. Please try again later.');
-                return 0;
+                return 0; // Return 0 in case of error
             }
         }
 
+        // Update the displayed remaining hours
         function updateRemainingHoursDisplay(remainingHours) {
             document.getElementById('dashboard-remaining-hours').textContent = remainingHours;
         }
 
+        // On page load
         document.addEventListener('DOMContentLoaded', () => {
+            // Listen for changes in the user's authentication state
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     const userDocRef = doc(db, 'students', user.uid);
-
                     const remainingHours = await fetchRemainingHours(userDocRef);
                     updateRemainingHoursDisplay(remainingHours);
                 } else {
@@ -130,7 +130,7 @@
                 }
             });
 
-            // Listen for updates from work-details.html
+            // Listen for updates to remaining hours from work-details.html via localStorage
             window.addEventListener('storage', (event) => {
                 if (event.key === 'remainingHoursUpdated' && event.newValue === 'true') {
                     localStorage.removeItem('remainingHoursUpdated');
@@ -144,6 +144,16 @@
                 }
             });
         });
+
+        // Logout functionality
+        document.getElementById('logout-button').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html'; // Redirect to login page after logout
+            }).catch((error) => {
+                console.error('Logout error:', error);
+            });
+        });
     </script>
 </body>
+
 </html>

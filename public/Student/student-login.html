@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="form-container" id="form-container">
         <!-- Login Form -->
@@ -22,7 +24,7 @@
             <form id="studentLoginForm">
                 <input type="email" id="lEmail" placeholder="Email" required />
                 <input type="password" id="lPassword" placeholder="Password" required />
-                <button id="submitLogin">Login</button>
+                <button type="submit" id="submitLogin">Login</button>
                 <div id="loginMessage" class="hidden"></div>
             </form>
             <div class="toggle-link">
@@ -31,8 +33,30 @@
         </div>
     </div>
 
-    <script>
-        // JavaScript for login functionality is already included in firebaseauth.js
+    <!-- Firebase Setup -->
+    <script type="module">
+        import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    
+        // Firebase config
+        const firebaseConfig = {
+          apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
+          authDomain: "trackio-f5b07.firebaseapp.com",
+          projectId: "trackio-f5b07",
+          storageBucket: "trackio-f5b07.appspot.com",
+          messagingSenderId: "1083789426923",
+          appId: "1:1083789426923:web:c372749a28e84ff9cd7eae"
+        };
+    
+        // Initialize Firebase (only if not already initialized)
+        const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+    
+        // Your login functionality goes here
     </script>
+    
 </body>
+
 </html>
