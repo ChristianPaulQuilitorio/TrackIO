@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 17, 2025 at 07:37 AM
+-- Generation Time: Apr 18, 2025 at 02:16 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -43,12 +43,21 @@ CREATE TABLE `companies` (
 
 CREATE TABLE `students` (
   `id` int(11) NOT NULL,
-  `firebase_uid` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `first_name` varchar(100) NOT NULL,
-  `last_name` varchar(100) NOT NULL,
+  `uid` varchar(255) NOT NULL,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `students`
+--
+
+INSERT INTO `students` (`id`, `uid`, `first_name`, `last_name`, `email`, `created_at`) VALUES
+(1, '7osEp4Uqz2ZKieR1JFZ8JpV7VRk2', 'John Carlo', 'Sancon', 'winterloudrel@gmail.com', '2025-04-17 19:28:13'),
+(2, 'hjc9yOBxhcTjaUpavXFURDm6ALB2', 'Mushroom', 'Potato', 'xjohncarlox20@gmail.com', '2025-04-17 19:33:16'),
+(3, 'faoSKfRmwdap6U0MDfnl6JyzJXD3', 'Mushroom', 'Potato', '202310338@gordoncollege.edu.ph', '2025-04-17 19:57:30');
 
 -- --------------------------------------------------------
 
@@ -82,15 +91,6 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `users`
---
-
-INSERT INTO `users` (`id`, `firebase_uid`, `email`, `first_name`, `last_name`, `verification_code`, `email_verified`) VALUES
-(6, 'G9cQZXi2a3SUfO8axQsILITspCR2', 'winterloudrel@gmail.com', 'John Carlo', 'Sancon', 'a2mh3anyi2d', 0),
-(7, '1FIh7fjTKuNCykoFGsCV3bPkr282', 'xjohncarlox20@gmail.com', 'John Carlo', 'Sancon', 'nl9e9klsixp', 0),
-(8, 'g1o1130rAQhJC67rh63fQEPwAL83', 'winterloudrel@gmail.com', 'John Carlo', 'Sancon', 'u1p06bnfyc', 0);
-
---
 -- Indexes for dumped tables
 --
 
@@ -106,9 +106,7 @@ ALTER TABLE `companies`
 -- Indexes for table `students`
 --
 ALTER TABLE `students`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `firebase_uid` (`firebase_uid`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `teachers`
@@ -138,7 +136,7 @@ ALTER TABLE `companies`
 -- AUTO_INCREMENT for table `students`
 --
 ALTER TABLE `students`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `teachers`
