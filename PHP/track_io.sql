@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 18, 2025 at 02:16 PM
+-- Generation Time: Apr 18, 2025 at 07:27 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -47,17 +47,26 @@ CREATE TABLE `students` (
   `first_name` varchar(255) DEFAULT NULL,
   `last_name` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `profile_pic` varchar(255) DEFAULT NULL,
+  `middle_name` varchar(100) DEFAULT NULL,
+  `contact_no` varchar(20) DEFAULT NULL,
+  `dob` date DEFAULT NULL,
+  `college_name` varchar(255) DEFAULT NULL,
+  `age` int(11) DEFAULT NULL,
+  `sex` enum('Male','Female','Non-Binary','Prefer not to say') DEFAULT NULL,
+  `college_program` varchar(100) DEFAULT NULL,
+  `year_level` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `students`
 --
 
-INSERT INTO `students` (`id`, `uid`, `first_name`, `last_name`, `email`, `created_at`) VALUES
-(1, '7osEp4Uqz2ZKieR1JFZ8JpV7VRk2', 'John Carlo', 'Sancon', 'winterloudrel@gmail.com', '2025-04-17 19:28:13'),
-(2, 'hjc9yOBxhcTjaUpavXFURDm6ALB2', 'Mushroom', 'Potato', 'xjohncarlox20@gmail.com', '2025-04-17 19:33:16'),
-(3, 'faoSKfRmwdap6U0MDfnl6JyzJXD3', 'Mushroom', 'Potato', '202310338@gordoncollege.edu.ph', '2025-04-17 19:57:30');
+INSERT INTO `students` (`id`, `uid`, `first_name`, `last_name`, `email`, `created_at`, `profile_pic`, `middle_name`, `contact_no`, `dob`, `college_name`, `age`, `sex`, `college_program`, `year_level`) VALUES
+(1, '7osEp4Uqz2ZKieR1JFZ8JpV7VRk2', 'Dennisse Ann', 'Lacap', 'winterloudrel@gmail.com', '2025-04-17 19:28:13', 'uploads/1744996473_google.png', 'N/A', '09464107010', '2005-01-20', 'Gordon College', 19, 'Male', 'CCS/BSIT', '1st Year'),
+(2, 'hjc9yOBxhcTjaUpavXFURDm6ALB2', 'John', 'Doe', 'xjohncarlox20@gmail.com', '2025-04-17 19:33:16', 'uploads/your_image.jpg', 'Middle', '123456789', '0000-00-00', 'XYZ University', 20, 'Male', 'BSIT', '3'),
+(3, 'faoSKfRmwdap6U0MDfnl6JyzJXD3', 'Mushroom', 'Potato', '202310338@gordoncollege.edu.ph', '2025-04-17 19:57:30', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
