@@ -15,7 +15,6 @@
             <a href="student-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
-            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button> 
         </nav>
     </header>
 
@@ -61,7 +60,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
+    
         // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
@@ -71,38 +70,40 @@
             messagingSenderId: "1083789426923",
             appId: "1:1083789426923:web:c372749a28e84ff9cd7eae"
         };
-
+    
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth();
-
+    
+        // Block access if not authenticated
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                alert("Access denied. Please log in first.");
+                window.location.href = "student-login.html";
+            }
+        });
+    
         // Save remaining hours to Firestore
         async function saveRemainingHoursToFirestore(userId, remainingHours) {
             try {
                 await setDoc(doc(db, "students", userId), { remainingHours }, { merge: true });
                 alert("Remaining hours saved successfully!");
-
-                // Save to localStorage to notify student-dashboard.html
                 localStorage.setItem("updatedRemainingHours", remainingHours);
             } catch (error) {
                 console.error("Error saving remaining hours: ", error);
                 alert("Error saving remaining hours. Please try again.");
             }
         }
-
-        // Get authenticated user and listen to changes
+    
         function getAuthenticatedUser(callback) {
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     callback(user);
-                } else {
-                    alert("No user is signed in. Please log in.");
                 }
             });
         }
-
-        // Handle Save button for remaining hours
+    
         const saveButton = document.getElementById("save-remaining-hours");
         saveButton.addEventListener("click", async () => {
             getAuthenticatedUser(async (user) => {
@@ -111,12 +112,11 @@
                     alert("Please enter a valid number for remaining hours.");
                     return;
                 }
-
-                // Save remaining hours to Firestore and localStorage
                 await saveRemainingHoursToFirestore(user.uid, remainingHours);
             });
         });
     </script>
+    
 </body>
 
 </html>

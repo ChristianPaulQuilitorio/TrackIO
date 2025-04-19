@@ -9,9 +9,14 @@
       getAuth,
       createUserWithEmailAndPassword,
       sendEmailVerification,
-      onAuthStateChanged,
-      reload
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+    import {
+      getFirestore,
+      doc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
@@ -24,62 +29,87 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    const form = document.getElementById("verifyForm");
-    const emailInput = document.getElementById("email");
+    const email = localStorage.getItem("pendingVerificationEmail");
+    const firstName = localStorage.getItem("tempFirstName");
+    const lastName = localStorage.getItem("tempLastName");
+    const password = localStorage.getItem("tempPassword");
+
     const emailSpan = document.getElementById("user-email");
-    const resendBtn = document.getElementById("resend-verification");
     const messageDiv = document.getElementById("message");
+    const resendBtn = document.getElementById("resend-verification");
 
-    // When the user submits the form
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = emailInput.value.trim();
-      const dummyPassword = "temporary123";  // Dummy password for email creation
+    emailSpan.textContent = email || "No email found";
+
+    async function createAndVerifyUser() {
+      if (!email || !firstName || !lastName || !password) {
+        messageDiv.textContent = "Missing registration data. Please go back and complete the form.";
+        return;
+      }
 
       try {
-        // Register user with a dummy password
-        const result = await createUserWithEmailAndPassword(auth, email, dummyPassword);
+        // Create account in Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
         // Send verification email
-        await sendEmailVerification(result.user);
+        await sendEmailVerification(user);
 
-        // Store email in localStorage for later use
-        localStorage.setItem("pendingVerificationEmail", email);
-
-        emailSpan.textContent = email;
         messageDiv.textContent = "Verification email sent. Please check your inbox.";
 
-        // Check if the email is verified periodically
-        const checkEmailVerified = setInterval(async () => {
-          // Reload the user to check if email has been verified
+        // Poll until verified
+        const poll = setInterval(async () => {
           await auth.currentUser.reload();
 
           if (auth.currentUser.emailVerified) {
-            clearInterval(checkEmailVerified);
-            // When the email is verified, redirect to student-register.html
-            window.location.href = "student-register.html";
+            clearInterval(poll);
+
+            // Save student data to Firestore
+            await setDoc(doc(db, "students", user.uid), {
+              firstName: firstName,
+              lastName: lastName,
+              email: email,
+              remainingHours: 200,
+              uid: user.uid
+            });
+
+            // Clean up
+            localStorage.removeItem("pendingVerificationEmail");
+            localStorage.removeItem("tempFirstName");
+            localStorage.removeItem("tempLastName");
+            localStorage.removeItem("tempPassword");
+
+            messageDiv.textContent = "Email verified and account created! Redirecting...";
+
+            setTimeout(() => {
+              window.location.href = "student-login.html";
+            }, 2000);
           }
-        }, 3000); // Check every 3 seconds
+        }, 3000);
+
       } catch (error) {
-        console.error("Verification error:", error);
+        console.error("Account Creation/Verification Error:", error);
         messageDiv.textContent = error.message;
       }
-    });
+    }
 
-    // Resend verification email
+    createAndVerifyUser();
+
     resendBtn.addEventListener("click", async () => {
       try {
         const user = auth.currentUser;
-        if (user) {
+        if (user && !user.emailVerified) {
           await sendEmailVerification(user);
           alert("Verification email resent.");
         }
       } catch (error) {
-        console.error("Error resending email:", error);
+        console.error("Resend error:", error);
+        messageDiv.textContent = error.message;
       }
     });
   </script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -121,11 +151,7 @@
 <body>
   <div class="box">
     <h2>Verify Your Email 📧</h2>
-    <form id="verifyForm">
-      <input type="email" id="email" placeholder="Enter your email" required />
-      <button type="submit">Send Verification</button>
-    </form>
-    <p>Email: <strong id="user-email">Waiting...</strong></p>
+    <p>Email: <strong id="user-email">Loading...</strong></p>
     <button id="resend-verification">Resend Verification</button>
     <p id="message"></p>
   </div>
