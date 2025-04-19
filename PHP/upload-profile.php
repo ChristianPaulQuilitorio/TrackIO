@@ -24,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sex = $_POST['sex'] ?? '';
     $collegeProgram = $_POST['collegeProgram'] ?? '';
     $yearLevel = $_POST['yearLevel'] ?? '';
+    $block = $_POST['block'] ?? '';
 
     // Save file
     $uploadDir = '../uploads/';
@@ -36,10 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $targetPath = $uploadDir . $fileName;
 
     if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-        $stmt = $conn->prepare("UPDATE students SET profile_pic = ?, first_name = ?, last_name = ?, middle_name = ?, contact_no = ?, dob = ?, college_name = ?, age = ?, sex = ?, college_program = ?, year_level = ? WHERE uid = ?");
-        $stmt->bind_param("ssssssssssss",
+        $stmt = $conn->prepare("UPDATE students SET profile_pic = ?, first_name = ?, last_name = ?, middle_name = ?, contact_no = ?, dob = ?, college_name = ?, age = ?, sex = ?, college_program = ?, year_level = ?, block = ? WHERE uid = ?");
+        $stmt->bind_param("sssssssssssss",
             $relativePath, $firstName, $lastName, $middleName, $contactNo, $dob,
-            $collegeName, $age, $sex, $collegeProgram, $yearLevel, $uid
+            $collegeName, $age, $sex, $collegeProgram, $yearLevel, $block, $uid
         );
 
         if ($stmt->execute()) {

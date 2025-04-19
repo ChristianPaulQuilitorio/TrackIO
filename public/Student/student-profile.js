@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-async function loadStudentProfile(user) {
+async function fetchAndLoadStudentProfile(user) {
     try {
         const studentDocRef = doc(db, "students", user.uid);
         const studentDoc = await getDoc(studentDocRef);
@@ -27,21 +27,20 @@ async function loadStudentProfile(user) {
             document.getElementById("profile-first-name").value = studentData.firstName || "";
             document.getElementById("profile-last-name").value = studentData.lastName || "";
             document.getElementById("profile-email").textContent = studentData.email;
-
-            // New fields
             document.getElementById("profile-middle-name").value = studentData.middleName || "";
             document.getElementById("profile-contact-number").value = studentData.contactNumber || "";
             document.getElementById("profile-date-of-birth").value = studentData.dateOfBirth || "";
-            document.getElementById("profile-college-school-name").value = studentData.collegeSchoolName || "";
+            document.getElementById("profile-college-school-name").value = "Gordon College Olongapo";
+            document.getElementById("profile-college-course").value = "CCS";
             document.getElementById("profile-age").value = studentData.age || "";
             document.getElementById("profile-sex").value = studentData.sex || "";
-            document.getElementById("profile-college-program").value = studentData.collegeProgram || "";
+            document.getElementById("profile-program").value = studentData.program || "";
             document.getElementById("profile-year-level").value = studentData.yearLevel || "";
+            document.getElementById("profile-block").value = studentData.block || "";
 
             const profilePhoto = studentData.profile_pic
                 ? `http://localhost/TrackIO/${studentData.profile_pic}`
                 : "../img/sample-profile.jpg";
-
             document.getElementById("profile-photo").src = profilePhoto;
 
             console.log("Student profile loaded successfully:", studentData);
@@ -60,11 +59,13 @@ async function updateStudentProfile(user) {
         const middleName = document.getElementById("profile-middle-name").value.trim();
         const contactNumber = document.getElementById("profile-contact-number").value.trim();
         const dateOfBirth = document.getElementById("profile-date-of-birth").value;
-        const collegeSchoolName = document.getElementById("profile-college-school-name").value.trim();
+        const collegeSchoolName = "Gordon College Olongapo";
+        const collegeCourse = "CCS";
         const age = document.getElementById("profile-age").value;
         const sex = document.getElementById("profile-sex").value;
-        const collegeProgram = document.getElementById("profile-college-program").value.trim();
-        const yearLevel = document.getElementById("profile-year-level").value.trim();
+        const program = document.getElementById("profile-program").value;
+        const yearLevel = document.getElementById("profile-year-level").value;
+        const block = document.getElementById("profile-block").value;
         const photoFile = document.getElementById("photo-upload").files[0];
 
         if (!firstName || !lastName) {
@@ -81,13 +82,14 @@ async function updateStudentProfile(user) {
             contactNumber,
             dateOfBirth,
             collegeSchoolName,
+            collegeCourse,
             age,
             sex,
-            collegeProgram,
-            yearLevel
+            program,
+            yearLevel,
+            block
         });
 
-        // If photo file exists, upload it
         if (photoFile) {
             const formData = new FormData();
             formData.append("file", photoFile);
@@ -100,9 +102,9 @@ async function updateStudentProfile(user) {
             formData.append("collegeName", collegeSchoolName);
             formData.append("age", age);
             formData.append("sex", sex);
-            formData.append("collegeProgram", collegeProgram);
+            formData.append("collegeProgram", program);
             formData.append("yearLevel", yearLevel);
-            
+            formData.append("block", block);
 
             const response = await fetch("http://localhost/TrackIO/PHP/upload-profile.php", {
                 method: "POST",
@@ -120,12 +122,10 @@ async function updateStudentProfile(user) {
 
                 const relativePath = result.filePath;
 
-                // Update Firestore document with the uploaded profile picture's relative path
                 await updateDoc(studentDocRef, {
                     profile_pic: relativePath
                 });
 
-                // Optionally update the profile photo on the page as well
                 document.getElementById("profile-photo").src = `http://localhost/TrackIO/${relativePath}`;
             } catch (jsonError) {
                 console.error("Error parsing JSON:", jsonError);
@@ -140,27 +140,35 @@ async function updateStudentProfile(user) {
     }
 }
 
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        console.log("User is authenticated:", user);
-        loadStudentProfile(user);
+document.addEventListener("DOMContentLoaded", () => {
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            console.log("User is authenticated:", user);
+            fetchAndLoadStudentProfile(user);
 
-        document.getElementById("save-profile-button").addEventListener("click", () => {
-            updateStudentProfile(user);
+            const saveButton = document.getElementById("save-profile-button");
+            if (saveButton) {
+                saveButton.addEventListener("click", () => {
+                    updateStudentProfile(user);
+                });
+            }
+        } else {
+            console.log("No authenticated user found. Redirecting to login page...");
+            window.location.href = "/Student/student-login.html";
+        }
+    });
+
+    const logoutButton = document.getElementById("logout-button");
+    if (logoutButton) {
+        logoutButton.addEventListener("click", async () => {
+            try {
+                await signOut(auth);
+                console.log("User logged out successfully.");
+                window.location.href = "/Student/student-login.html";
+            } catch (error) {
+                console.error("Error logging out:", error);
+                alert("Failed to log out. Please try again.");
+            }
         });
-    } else {
-        console.log("No authenticated user found. Redirecting to login page...");
-        window.location.href = "/Student/student-login.html";
-    }
-});
-
-document.getElementById("logout-button").addEventListener("click", async () => {
-    try {
-        await signOut(auth);
-        console.log("User logged out successfully.");
-        window.location.href = "/Student/student-login.html";
-    } catch (error) {
-        console.error("Error logging out:", error);
-        alert("Failed to log out. Please try again.");
     }
 });

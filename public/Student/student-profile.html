@@ -24,15 +24,7 @@
     </header>
 
     <!-- Notification Pop-Up -->
-    <div class="notification-popup hidden" id="notification-popup"></div>
-
-    <!-- User Info Section -->
-    <div class="user-info" style="text-align: center; margin-top: 10px;">
-        <h2>Welcome, <span id="user-name">Guest</span></h2>
-        <p>Email: <span id="user-email">Not Available</span></p>
-    </div>
-
-    <!-- Navigation Bar -->
+    <div class="notification-popup hidden" id="notification-popup"></div> <!-- Navigation Bar -->
 
     <nav class="navbar">
         <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
@@ -43,9 +35,9 @@
             <img src="../img/Work-Details.png" alt="Work Details Icon">
             <span>Work Details</span>
         </a>
-        <a href="#documentation" class="nav-item" aria-label="Documentation">
+        <a href="#Documentation" class="nav-item" aria-label="Documentation">
             <img src="../img/Documentation.png" alt="Documentation Icon">
-            <span>Documentation</span>
+            <span>Daily Diary</span>
         </a>
         <a href="#about" class="nav-item" aria-label="About">
             <img src="../img/about.png" alt="About Icon">
@@ -76,15 +68,15 @@
         <p><strong>Date of Birth:</strong>
             <input type="date" id="profile-date-of-birth" />
         </p>
-
+        
         <p><strong>College School Name:</strong>
-            <input type="text" id="profile-college-school-name" placeholder="Enter college/school name" />
+            <input type="text" id="profile-college-school-name" value="Gordon College Olongapo" readonly />
         </p>
-
+        
         <p><strong>Age:</strong>
             <input type="number" id="profile-age" placeholder="Enter age" />
         </p>
-
+        
         <p><strong>Sex:</strong>
             <select id="profile-sex">
                 <option value="">-- Select --</option>
@@ -94,13 +86,39 @@
                 <option value="Prefer not to say">Prefer not to say</option>
             </select>
         </p>
-
-        <p><strong>College / Program:</strong>
-            <input type="text" id="profile-college-program" placeholder="e.g., CCS / BSIT" />
+        <p>
+            <strong>Course: </strong>
+            <input type="text" id="profile-college-course" value="CCS" readonly/>
         </p>
-
+        <p><strong>Program:</strong>
+            <select id="profile-program">
+                <option value="">-- Select Program --</option>
+                <option value="BSIT">BSIT</option>
+                <option value="BSCS">BSCS</option>
+                <option value="BSEMC">BSEMC</option>
+            </select>
+        </p>
+        
         <p><strong>Year Level:</strong>
-            <input type="text" id="profile-year-level" placeholder="Enter year level" />
+            <select id="profile-year-level">
+                <option value="">-- Select Year Level --</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+            </select>
+        </p>
+        
+        <p><strong>Block:</strong>
+            <select id="profile-block">
+                <option value="">-- Select Block --</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+            </select>
         </p>
 
         <p><strong>Profile Photo:</strong>
