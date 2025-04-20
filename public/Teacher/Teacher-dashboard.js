@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
@@ -140,7 +140,7 @@ async function showStudentDetails(student) {
 
   // Display the student's full profile
   const profileDiv = document.createElement("div");
-  profileDiv.className = "student-profile";
+  profileDiv.className = "student-profile container"; // Adding 'container' class for styling
 
   const img = document.createElement("img");
   img.src = student.profile_pic
@@ -175,49 +175,102 @@ async function showStudentDetails(student) {
   if (studentDoc.exists()) {
     const studentData = studentDoc.data();
 
-    // Display student's calendar events and locations
+    // Display student's calendar events
     const calendarDiv = document.createElement("div");
-    calendarDiv.className = "student-calendar";
+    calendarDiv.className = "student-calendar container"; // Adding 'container' class for styling
     calendarDiv.innerHTML = `<h4>Calendar</h4>`;
 
-    // Example: Assume student has an array of calendar events
     if (studentData.checkInOutData && Array.isArray(studentData.checkInOutData)) {
       studentData.checkInOutData.forEach(entry => {
         const eventDiv = document.createElement("div");
-        eventDiv.innerHTML = `<strong>Date:</strong> ${entry.date}<br>
-                             <strong>Check-in Time:</strong> ${entry.checkInTime}<br>
-                             <strong>Check-out Time:</strong> ${entry.checkOutTime}`;
+        eventDiv.className = "event-container"; // Adding class for event style
+        eventDiv.innerHTML = `
+          <strong>Date:</strong> ${entry.date}<br>
+          <strong>Check-in Time:</strong> ${entry.checkInTime}<br>
+          <strong>Check-out Time:</strong> ${entry.checkOutTime}`;
         calendarDiv.appendChild(eventDiv);
       });
     } else {
       const noEventsDiv = document.createElement("div");
+      noEventsDiv.className = "no-events-container"; // Styling for 'no events' section
       noEventsDiv.textContent = "No calendar events available.";
       calendarDiv.appendChild(noEventsDiv);
     }
 
+    container.appendChild(calendarDiv);
+
     // Display student's location info
     const locationDiv = document.createElement("div");
-    locationDiv.className = "student-location";
+    locationDiv.className = "student-location container"; // Adding 'container' class for styling
     locationDiv.innerHTML = `<h4>Location</h4>`;
 
     if (studentData.location && studentData.location.name) {
       const locationInfo = document.createElement("div");
-      locationInfo.innerHTML = `<strong>Location:</strong> ${studentData.location.name}<br>
-                                <strong>Latitude:</strong> ${studentData.location.latitude}<br>
-                                <strong>Longitude:</strong> ${studentData.location.longitude}`;
+      locationInfo.className = "location-info"; // Adding class for location info styling
+      locationInfo.innerHTML = `
+        <strong>Location:</strong> ${studentData.location.name}<br>
+        <strong>Latitude:</strong> ${studentData.location.latitude}<br>
+        <strong>Longitude:</strong> ${studentData.location.longitude}`;
       locationDiv.appendChild(locationInfo);
     } else {
       const noLocationDiv = document.createElement("div");
+      noLocationDiv.className = "no-location-container"; // Styling for 'no location' section
       noLocationDiv.textContent = "No location information available.";
       locationDiv.appendChild(noLocationDiv);
     }
 
-    container.appendChild(calendarDiv);
     container.appendChild(locationDiv);
+
+    // Display daily reports
+    const reportsDiv = document.createElement("div");
+    reportsDiv.className = "student-reports container"; // Adding 'container' class for styling
+    reportsDiv.innerHTML = `<h4>Daily Reports</h4>`;
+
+    if (studentData.checkInOutData && Array.isArray(studentData.checkInOutData)) {
+      studentData.checkInOutData.forEach(async (entry) => {
+        const { date } = entry;
+        const reportRef = doc(db, "students", student.id, "dailyReports", date);
+        const reportDoc = await getDoc(reportRef);
+
+        const reportDiv = document.createElement("div");
+        const reportDate = reportDoc.exists()
+          ? new Date(reportDoc.data().submittedAt.seconds * 1000).toLocaleString()
+          : "No submission date available";
+
+        if (reportDoc.exists()) {
+          const report = reportDoc.data().report;
+          reportDiv.className = "report-container"; // Adding a class for styling individual reports
+          reportDiv.innerHTML = `
+            <strong>Date:</strong> ${date}<br>
+            <strong>Report:</strong> ${report}<br>
+            <strong>Submitted At:</strong> ${reportDate}`;
+        } else {
+          reportDiv.className = "no-report-container"; // Adding a class for no report scenario
+          reportDiv.innerHTML = `<strong>Date:</strong> ${date}<br><strong>Report:</strong> No report submitted yet.`;
+        }
+
+        reportsDiv.appendChild(reportDiv);
+      });
+
+      container.appendChild(reportsDiv);
+    } else {
+      const noReportsDiv = document.createElement("div");
+      noReportsDiv.className = "no-reports-container"; // Styling for 'no reports' section
+      noReportsDiv.textContent = "No daily reports available.";
+      container.appendChild(noReportsDiv);
+    }
+
   } else {
     console.log("No such student document!");
   }
 }
+
+// Real-time listener for student data
+onSnapshot(collection(db, "students"), (snapshot) => {
+  const students = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+  const groupedData = groupStudents(students);
+  showPrograms(groupedData);
+});
 
 async function fetchStudents() {
   try {

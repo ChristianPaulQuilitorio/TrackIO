@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Teacher Dashboard</title>
   <link rel="stylesheet" href="Teacher-style.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  
 
   <style>
     body {
@@ -115,6 +117,15 @@
       margin-right: 10px;
     }
 
+    .student-profile img {
+  width: 100px;  /* Adjust the size as needed */
+  height: 100px;  /* Adjust the size as needed */
+  border-radius: 50%;  /* Makes the image circular */
+  object-fit: cover;  /* Ensures the image maintains its aspect ratio */
+  border: 2px solid #ddd;  /* Optional: adds a border around the image */
+}
+
+
     .user-list {
       background-color: white;
       padding: 15px;
@@ -172,5 +183,6 @@
   </div>
 
   <script type="module" src="Teacher-dashboard.js"></script>
+  
 </body>
 </html>
