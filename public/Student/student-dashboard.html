@@ -63,15 +63,27 @@
         </a>
     </nav>
 
-    <!-- Check-In Container -->
-    <div class="check-in-container">
-        <div class="remaining-hours">
-            <p>Remaining Hours: <span id="dashboard-remaining-hours">200</span> hours</p>
-        </div>
+<div class="check-in-container">
+    <!-- Remaining Hours -->
+    <div class="remaining-hours">
+        <p>Remaining Hours: <span id="dashboard-remaining-hours">200</span> hours</p>
+    </div>
+
+    <!-- Check-In/Check-Out Time -->
+    <div class="time-inputs">
         <input type="text" id="start-time" placeholder="Check-In Time" readonly />
         <input type="text" id="end-time" placeholder="Check-Out Time" readonly />
-        <button id="check-in-button">Check In</button>
     </div>
+
+    <!-- Action Buttons -->
+    <div class="check-buttons">
+        <button id="check-in-button">Check In</button>
+        <button id="check-out-btn" style="display: none;">Check Out</button>
+        <button id="reset-btn" style="display: none;">Reset</button>
+    </div>
+</div>
+
+    
 
     <!-- Calendar Container -->
     <div id="calendar-container">

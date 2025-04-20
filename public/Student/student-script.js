@@ -140,210 +140,267 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const checkInButton = document.getElementById('check-in-button');
-    const startTimeInput = document.getElementById('start-time');
-    const endTimeInput = document.getElementById('end-time');
-    const remainingHoursElement = document.getElementById('remaining-hours');
-    const locationElement = document.getElementById('location');
-    const logoutButton = document.getElementById('logout-button');
 
-    let isCheckedIn = false;
-    let remainingHours = 0;
 
-    // Function to get the current date and time in MM/DD/YY and 12-hour format
-    function getCurrentDateTime() {
-        const now = new Date();
-        const options = { month: '2-digit', day: '2-digit', year: '2-digit' };
-        const date = now.toLocaleDateString('en-US', options);
-        const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        return `${date} ${time}`;
-    }
+    //Start of Check in and check out
+// Initialize Firebase Firestore
+let checkInTime = null;
+let checkOutTime = null;
+let isCheckedIn = false;
 
-    // Function to calculate hours between two times
-    function calculateHours(start, end) {
-        const startTime = new Date(`01/01/2000 ${start}`);
-        const endTime = new Date(`01/01/2000 ${end}`);
-        const diff = (endTime - startTime) / (1000 * 60 * 60); // Convert milliseconds to hours
-        return diff;
-    }
+const checkInButton = document.getElementById('check-in-button');
+const checkOutButton = document.getElementById("check-out-btn");
+const startTimeInput = document.getElementById('start-time');
+const endTimeInput = document.getElementById('end-time');
+const remainingHoursElement = document.getElementById('dashboard-remaining-hours');
+const calendarEl = document.getElementById('calendar');
 
-    // Function to store or update check-in and check-out data in Firestore
-    async function storeCheckInOutData(user, checkInTime, checkOutTime) {
-        if (!user || !user.uid) {
-            console.error("No authenticated user found.");
-            return;
-        }
+// Helper: Format date to YYYY-MM-DD in Asia/Manila
+function getCurrentDate() {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
+    return formatter.format(new Date());
+}
 
-        try {
-            const studentDocRef = doc(db, "students", user.uid);
-            const studentDoc = await getDoc(studentDocRef);
-            let checkInOutData = [];
+// Helper: Convert AM/PM time to 24-hour format for calendar
+function convertTo24HourFormat(timeStr) {
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (modifier === 'PM' && hours < 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+}
 
-            if (studentDoc.exists()) {
-                console.log("Student document found:", studentDoc.data());
-                checkInOutData = studentDoc.data().checkInOutData || [];
-            } else {
-                console.warn("Student document does not exist for UID:", user.uid);
-            }
+// Store/Update Check-in/out Data
+async function storeCheckInOutData(user, checkInTime, checkOutTime) {
+    if (!user?.uid) return console.error("No authenticated user found.");
+    try {
+        const studentDocRef = doc(db, "students", user.uid);
+        const studentDoc = await getDoc(studentDocRef);
+        let checkInOutData = studentDoc.exists() ? (studentDoc.data().checkInOutData || []) : [];
 
-            const currentDate = getCurrentDate(); // Use the helper function to get the current date
+        const currentDate = getCurrentDate();
+        const existingIndex = checkInOutData.findIndex(entry => entry.date === currentDate);
 
-            // Add a new entry for the current date
-            checkInOutData.push({
-                checkInTime: checkInTime || null,
-                checkOutTime: checkOutTime || null,
-                date: currentDate
-            });
-
-            // Update Firestore with the modified data
-            await updateDoc(studentDocRef, {
-                checkInOutData: checkInOutData
-            });
-
-            console.log("Check-in and check-out data added successfully in Firestore.");
-        } catch (error) {
-            console.error("Error storing check-in and check-out data in Firestore:", error);
-        }
-    }
-
-    // Function to reset data for the current date in Firestore
-    async function resetDataForCurrentDate(user) {
-        if (!user || !user.uid) {
-            console.error("No authenticated user found.");
-            return;
-        }
-
-        try {
-            const studentDocRef = doc(db, "students", user.uid);
-            const studentDoc = await getDoc(studentDocRef);
-            let checkInOutData = [];
-
-            if (studentDoc.exists()) {
-                console.log("Student document found:", studentDoc.data());
-                checkInOutData = studentDoc.data().checkInOutData || [];
-            } else {
-                console.warn("Student document does not exist for UID:", user.uid);
-                return;
-            }
-
-            const currentDate = getCurrentDate(); // Use the helper function to get the current date
-
-            // Filter out entries for the current date
-            const updatedCheckInOutData = checkInOutData.filter(entry => entry.date !== currentDate);
-
-            // Update Firestore with the modified data
-            await updateDoc(studentDocRef, {
-                checkInOutData: updatedCheckInOutData
-            });
-
-            console.log(`Data for ${currentDate} reset successfully in Firestore.`);
-        } catch (error) {
-            console.error("Error resetting data for the current date in Firestore:", error);
-        }
-    }
-
-    // Modify the Check In/Check Out button event listener
-    checkInButton.addEventListener('click', async () => {
-        const user = auth.currentUser;
-        if (!user) {
-            alert("You must be logged in to check in.");
-            return;
-        }
-
-        const now = new Date();
-        const currentDate = now.toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
-
-        if (!isCheckedIn) {
-            // Check-In Logic
-            checkInTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }); // Format with AM/PM
-            startTimeInput.value = checkInTime;
-            console.log(`Checked In at: ${checkInTime}`);
-            checkInButton.textContent = 'Check Out';
-            isCheckedIn = true;
-
-            // Save check-in time to Firestore
-            await storeCheckInOutData(user, checkInTime, null);
+        if (existingIndex !== -1) {
+            const updatedEntry = { ...checkInOutData[existingIndex] };
+            if (checkInTime && !updatedEntry.checkInTime) updatedEntry.checkInTime = checkInTime;
+            if (checkOutTime && !updatedEntry.checkOutTime) updatedEntry.checkOutTime = checkOutTime;
+            checkInOutData[existingIndex] = updatedEntry;
         } else {
-            // Check-Out Logic
-            checkOutTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }); // Format with AM/PM
-            endTimeInput.value = checkOutTime;
-            console.log(`Checked Out at: ${checkOutTime}`);
-            checkInButton.textContent = 'Confirm Save';
-
-            // Change button behavior to save the data
-            checkInButton.addEventListener('click', async () => {
-                await storeCheckInOutData(user, null, checkOutTime);
-                alert("Check-in and check-out saved successfully!");
-                loadCalendarEvents(user); // Reload calendar events
-                checkInButton.textContent = 'Check In';
-                isCheckedIn = false;
-                checkInTime = null;
-                checkOutTime = null;
-                startTimeInput.value = '';
-                endTimeInput.value = '';
-                endTimeInput.value = '';
-            }, { once: true });
-        }
-    });
-
-    // Add a reset button functionality
-    const resetButton = document.createElement('button');
-    resetButton.textContent = 'Reset';
-    resetButton.id = 'reset-button';
-    resetButton.style.marginTop = '10px';
-
-    // Append the reset button to the check-in container
-    const checkInContainer = document.querySelector('.check-in-container');
-    checkInContainer.appendChild(resetButton);
-
-    // Function to store reset data in Firestore with a new timestamp
-    async function storeResetData(user) {
-        if (!user || !user.uid) {
-            console.error("No authenticated user found.");
-            return;
+            checkInOutData.push({ checkInTime: checkInTime || null, checkOutTime: checkOutTime || null, date: currentDate });
         }
 
-        const resetTimestamp = new Date().toISOString(); // Get current timestamp
+        await updateDoc(studentDocRef, { checkInOutData });
+        console.log("Check-in/out data saved.");
+    } catch (error) {
+        console.error("Error saving check-in/out data:", error);
+    }
+}
 
-        try {
-            const userDocRef = doc(db, "users", user.uid);
+// Load Calendar Events
+async function loadCalendarEvents(user) {
+    if (!user?.uid) return;
+    try {
+        const studentDocRef = doc(db, "students", user.uid);
+        const studentDoc = await getDoc(studentDocRef);
+        if (!studentDoc.exists()) return;
 
-            // Add a new reset entry with the timestamp
-            await updateDoc(userDocRef, {
-                resets: arrayUnion({
-                    timestamp: resetTimestamp
-                })
-            });
+        const checkInOutData = studentDoc.data().checkInOutData || [];
+        const events = checkInOutData.flatMap((entry, index) => {
+            const date = entry.date;
+            const checkInEvent = entry.checkInTime ? {
+                id: `${index}-checkIn`,
+                title: `Check-In: ${entry.checkInTime}`,
+                start: `${date}T${convertTo24HourFormat(entry.checkInTime)}`,
+                color: '#4CAF50',
+                extendedProps: { index, type: 'checkIn' }
+            } : null;
 
-            console.log("Reset data stored successfully in Firestore with timestamp:", resetTimestamp);
-        } catch (error) {
-            console.error("Error storing reset data in Firestore:", error);
+            const checkOutEvent = entry.checkOutTime ? {
+                id: `${index}-checkOut`,
+                title: `Check-Out: ${entry.checkOutTime}`,
+                start: `${date}T${convertTo24HourFormat(entry.checkOutTime)}`,
+                color: '#f44336',
+                extendedProps: { index, type: 'checkOut' }
+            } : null;
+
+            return [checkInEvent, checkOutEvent].filter(e => e);
+        });
+
+        calendar.removeAllEvents();
+        calendar.addEventSource(events);
+    } catch (error) {
+        console.error("Error loading calendar events:", error);
+    }
+}
+
+// Delete Event
+async function deleteEvent(user, eventId) {
+    if (!user?.uid) return console.error("No authenticated user found.");
+    try {
+        const studentDocRef = doc(db, "students", user.uid);
+        const studentDoc = await getDoc(studentDocRef);
+        if (!studentDoc.exists()) return;
+
+        let checkInOutData = studentDoc.data().checkInOutData || [];
+        const [index] = eventId.split('-');
+        checkInOutData.splice(index, 1);
+
+        await updateDoc(studentDocRef, { checkInOutData });
+        console.log(`Deleted entry at index ${index}`);
+    } catch (error) {
+        console.error("Error deleting event:", error);
+    }
+}
+
+// Reset data for today
+async function resetDataForCurrentDate(user) {
+    if (!user?.uid) return;
+    try {
+        const studentDocRef = doc(db, "students", user.uid);
+        const studentDoc = await getDoc(studentDocRef);
+        if (!studentDoc.exists()) return;
+
+        const checkInOutData = studentDoc.data().checkInOutData || [];
+        const updated = checkInOutData.filter(entry => entry.date !== getCurrentDate());
+
+        await updateDoc(studentDocRef, { checkInOutData: updated });
+        console.log("Reset today's data");
+    } catch (error) {
+        console.error("Error resetting data:", error);
+    }
+}
+
+// Calendar Initialization
+const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    events: [],
+    eventClick: async (info) => {
+        const user = auth.currentUser;
+        if (!user) return alert("You must be logged in.");
+        const confirmDelete = confirm("Delete all data for this day?");
+        if (confirmDelete) {
+            await deleteEvent(user, info.event.id);
+            await loadCalendarEvents(user);
         }
     }
+});
+calendar.render();
 
-    // Add event listener to reset button
-    resetButton.addEventListener('click', async () => {
-        const user = auth.currentUser;
-        if (!user) {
-            alert("You must be logged in to reset data.");
-            return;
-        }
+// Auth and Initial Setup
+auth.onAuthStateChanged(async (user) => {
+    if (!user) return;
 
-        // Reset the UI
-        startTimeInput.value = '';
-        endTimeInput.value = '';
-        checkInTime = null;
-        checkOutTime = null;
-        isCheckedIn = false;
-        checkInButton.textContent = 'Check In';
-        console.log("Check-in and check-out reset.");
+    const studentDocRef = doc(db, "students", user.uid);
+    const studentDoc = await getDoc(studentDocRef);
+    const checkInOutData = studentDoc.exists() ? (studentDoc.data().checkInOutData || []) : [];
+    const todayEntry = checkInOutData.find(entry => entry.date === getCurrentDate());
 
-        // Reset data for the current date in Firestore
-        await resetDataForCurrentDate(user);
+    if (todayEntry?.checkInTime && !todayEntry.checkOutTime) {
+        isCheckedIn = true;
+        checkInTime = todayEntry.checkInTime;
+        startTimeInput.value = checkInTime;
+        checkInButton.style.display = 'none';
+        checkOutButton.style.display = 'inline-block';
+    } else if (todayEntry?.checkInTime && todayEntry?.checkOutTime) {
+        startTimeInput.value = todayEntry.checkInTime;
+        endTimeInput.value = todayEntry.checkOutTime;
+        checkInButton.style.display = 'none';
+        checkOutButton.style.display = 'none';
+    } else {
+        checkInButton.style.display = 'inline-block';
+        checkOutButton.style.display = 'none';
+    }
 
-        // Reload calendar events to reflect the changes
-        await loadCalendarEvents(user);
-    });
+    await loadCalendarEvents(user);
+});
+
+// Check-In with Validation
+checkInButton.addEventListener('click', async () => {
+    const user = auth.currentUser;
+    if (!user) return alert("You must be logged in to check in.");
+
+    const studentDocRef = doc(db, "students", user.uid);
+    const studentDoc = await getDoc(studentDocRef);
+    const checkInOutData = studentDoc.exists() ? (studentDoc.data().checkInOutData || []) : [];
+    const todayEntry = checkInOutData.find(entry => entry.date === getCurrentDate());
+
+    if (todayEntry?.checkInTime) {
+        alert("You have already checked in today.");
+        checkInButton.style.display = 'none';
+        checkOutButton.style.display = todayEntry?.checkOutTime ? 'none' : 'inline-block';
+        return;
+    }
+
+    const now = new Date();
+    const options = { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: true };
+    checkInTime = now.toLocaleTimeString('en-US', options);
+    startTimeInput.value = checkInTime;
+
+    await storeCheckInOutData(user, checkInTime, null);
+    isCheckedIn = true;
+
+    checkInButton.style.display = 'none';
+    checkOutButton.style.display = 'inline-block';
+
+    console.log(`Checked in at: ${checkInTime}`);
+});
+
+// Check-Out
+checkOutButton.addEventListener('click', async () => {
+    const user = auth.currentUser;
+    if (!user) return alert("You must be logged in to check out.");
+
+    const now = new Date();
+    const options = { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: true };
+    checkOutTime = now.toLocaleTimeString('en-US', options);
+    endTimeInput.value = checkOutTime;
+
+    await storeCheckInOutData(user, null, checkOutTime);
+    isCheckedIn = false;
+
+    checkInButton.style.display = 'none';
+    checkOutButton.style.display = 'none';
+
+    alert("Check-out successful!");
+    await loadCalendarEvents(user);
+});
+
+// Reset Button
+const resetButton = document.createElement('button');
+resetButton.textContent = 'Reset';
+resetButton.id = 'reset-button';
+resetButton.style.marginTop = '10px';
+document.querySelector('.check-in-container')?.appendChild(resetButton);
+
+resetButton.addEventListener('click', async () => {
+    const user = auth.currentUser;
+    if (!user) return alert("You must be logged in.");
+
+    startTimeInput.value = '';
+    endTimeInput.value = '';
+    checkInTime = null;
+    checkOutTime = null;
+    isCheckedIn = false;
+
+    checkInButton.style.display = 'inline-block';
+    checkOutButton.style.display = 'none';
+
+    await resetDataForCurrentDate(user);
+    await loadCalendarEvents(user);
+});
+
+//END Check in and check ouut
 
 // Geolocation functionality
 const mapContainer = document.getElementById('map');
@@ -685,27 +742,8 @@ onAuthStateChanged(auth, (user) => {
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const calendarEl = document.getElementById('calendar');
-    const checkInButton = document.getElementById('check-in-button');
-    const resetButton = document.getElementById('reset-button');
-    const startTimeInput = document.getElementById('start-time');
-    const endTimeInput = document.getElementById('end-time');
 
-    let isCheckedIn = false;
-    let checkInTime = null;
-    let checkOutTime = null;
-
-    // Initialize FullCalendar
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        events: [] // Events will be dynamically loaded
-    });
-    calendar.render();
+    
 
     // Function to fetch and display events on the calendar
     async function loadCalendarEvents(user) {
@@ -821,89 +859,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Add event click handler to the calendar
-    calendar.on('eventClick', async (info) => {
-        const user = auth.currentUser;
-        if (!user) {
-            alert("You must be logged in to delete events.");
-            return;
-        }
 
-        const eventId = info.event.id; // Get the event ID
-        const confirmDelete = confirm(`Are you sure you want to delete all data for this day?`);
-        if (confirmDelete) {
-            await deleteEvent(user, eventId); // Delete the entire day's data from Firestore
-            await loadCalendarEvents(user); // Reload calendar events
-        }
-    });
-
-    // Handle Check-In and Check-Out
-    checkInButton.addEventListener('click', async () => {
-        const user = auth.currentUser;
-        if (!user) {
-            alert("You must be logged in to check in.");
-            return;
-        }
-
-        if (!isCheckedIn) {
-            // Check-In Logic
-            const now = new Date();
-            checkInTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }); // Format with AM/PM
-            startTimeInput.value = checkInTime;
-            console.log(`Checked In at: ${checkInTime}`);
-            checkInButton.textContent = 'Check Out';
-            isCheckedIn = true;
-        } else {
-            // Check-Out Logic
-            const now = new Date();
-            checkOutTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }); // Format with AM/PM
-            endTimeInput.value = checkOutTime;
-            console.log(`Checked Out at: ${checkOutTime}`);
-            checkInButton.textContent = 'Confirm Save';
-
-            // Change button behavior to save the data
-            checkInButton.addEventListener('click', async () => {
-                await storeCheckInOutData(user, checkInTime, checkOutTime);
-                alert("Check-in and check-out saved successfully!");
-                loadCalendarEvents(user); // Reload calendar events
-                checkInButton.textContent = 'Check In';
-                isCheckedIn = false;
-                checkInTime = null;
-                checkOutTime = null;
-                startTimeInput.value = '';
-                endTimeInput.value = '';
-            }, { once: true });
-        }
-    });
-
-    // Handle Reset
-    resetButton.addEventListener('click', async () => {
-        const user = auth.currentUser;
-        if (!user) {
-            alert("You must be logged in to reset data.");
-            return;
-        }
-
-        // Reset the UI
-        startTimeInput.value = '';
-        endTimeInput.value = '';
-        checkInTime = null;
-        checkOutTime = null;
-        isCheckedIn = false;
-        checkInButton.textContent = 'Check In';
-        console.log("Check-in and check-out reset.");
-
-        // Reset data for the current date in Firestore
-        await resetDataForCurrentDate(user);
-
-        // Reload calendar events to reflect the changes
-        await loadCalendarEvents(user);
-    });
-
-    // Load calendar events on page load
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            loadCalendarEvents(user);
-        }
-    });
 });
