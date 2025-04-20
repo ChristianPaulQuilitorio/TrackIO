@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="student-style.css"> <!-- Link to external CSS -->
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="countdown-container">
+        <p>Remaining Time: <span id="countdown-display">Loading...</span></p>
+    </div>
+
+    <header class="main-header">
+        <button class="burger-button" aria-label="Toggle Navigation">☰</button>
+        <nav class="right-header-nav">
+            <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
+                <img src="../img/notification.png" alt="Notification Icon">
+            </a>
+            <a href="student-profile.html" class="icon-link" aria-label="Profile">
+                <img src="../img/profile.png" alt="Profile Icon">
+            </a>
+            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button> <!-- Logout Button -->
+        </nav>
+    </header>
+
+    <!-- Notification Pop-Up -->
+    <div class="notification-popup hidden" id="notification-popup"></div>
+
+    <!-- User Info Section -->
+    <div class="user-info" style="text-align: center; margin-top: 10px;">
+        <h2>Welcome, <span id="user-name">Guest</span></h2>
+        <p>Email: <span id="user-email">Not Available</span></p>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="student-dashboard.html" class="nav-item" aria-label="Student Dashboard">
+            <img src="../img/Student-dashboard.jpg" alt="Student Dashboard Icon">
+            <span>Student Dashboard</span>
+        </a>
+        <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
+            <img src="../img/Company-Finder.png" alt="Company Finder Icon">
+            <span>Company Finder</span>
+        </a>
+        <a href="work-details.html" class="nav-item" aria-label="Work Details">
+            <img src="../img/Work-Details.png" alt="Work Details Icon">
+            <span>Work Details</span>
+        </a>
+        <a href="student-documentation.html" class="nav-item" aria-label="Documentation">
+            <img src="../img/Documentation.png" alt="Documentation Icon">
+            <span>Daily Diary</span>
+        </a>
+        <a href="#about" class="nav-item" aria-label="About">
+            <img src="../img/about.png" alt="About Icon">
+            <span>About</span>
+        </a>
+    </nav>
+
+    <!-- Check-In Container -->
+    <div class="check-in-container">
+        <div class="remaining-hours">
+            <p>Remaining Hours: <span id="dashboard-remaining-hours">200</span> hours</p>
+        </div>
+        <input type="text" id="start-time" placeholder="Check-In Time" readonly />
+        <input type="text" id="end-time" placeholder="Check-Out Time" readonly />
+        <button id="check-in-button">Check In</button>
+    </div>
+
+    <!-- Calendar Container -->
+    <div id="calendar-container">
+        <div id="calendar"></div>
+    </div>
+
+    <!-- Geolocation Container -->
+    <div class="geolocation-container">
+        <h3>Your Current Location:</h3>
+        <p id="location">Fetching location...</p>
+        <div id="map" style="width: 100%; height: 300px; border: 1px solid #ddd;"></div>
+    </div>
+
+    <!-- Leaflet.js JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script type="module" src="student-script.js"></script> <!-- Link to external JavaScript -->
+    <script type="module">
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+        const db = getFirestore();
+        const auth = getAuth();
+        let countdownInterval = null;
+
+        // Format seconds to HH:MM:SS
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Start and update countdown timer
+        function startCountdown(remainingHours) {
+            const countdownDisplay = document.getElementById('countdown-display');
+            let totalSeconds = Math.floor(remainingHours * 3600); // Convert hours to seconds
+
+            if (countdownInterval) clearInterval(countdownInterval); // Clear previous interval
+
+            function updateCountdown() {
+                if (totalSeconds > 0) {
+                    countdownDisplay.textContent = formatTime(totalSeconds);
+                    totalSeconds--;
+                } else {
+                    countdownDisplay.textContent = "00:00:00";
+                    clearInterval(countdownInterval); // Stop countdown at 0
+                }
+            }
+
+            updateCountdown(); // Initial display
+            countdownInterval = setInterval(updateCountdown, 1000); // Update every second
+        }
+
+        // Fetch remaining hours from Firestore
+        async function fetchRemainingHours(userDocRef) {
+            try {
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    return userDoc.data().remainingHours || 0;
+                }
+                return 0; // Default to 0 if data doesn't exist
+            } catch (error) {
+                console.error('Error fetching remaining hours:', error);
+                alert('Failed to fetch remaining hours. Please try again later.');
+                return 0; // Return 0 in case of error
+            }
+        }
+
+        // Update remaining hours and start countdown
+        async function updateRemainingHoursDisplay(remainingHours) {
+            document.getElementById('dashboard-remaining-hours').textContent = remainingHours;
+            startCountdown(remainingHours);
+        }
+
+        // Main auth and data logic
+        document.addEventListener('DOMContentLoaded', () => {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    document.getElementById('user-name').textContent = user.displayName || 'Student';
+                    document.getElementById('user-email').textContent = user.email || 'N/A';
+
+                    const userDocRef = doc(db, 'students', user.uid);
+                    const remainingHours = await fetchRemainingHours(userDocRef);
+                    updateRemainingHoursDisplay(remainingHours);
+                } else {
+                    alert('No user is signed in. Please log in.');
+                }
+            });
+
+            // Update from localStorage flag
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'remainingHoursUpdated' && event.newValue === 'true') {
+                    localStorage.removeItem('remainingHoursUpdated');
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user) {
+                            const userDocRef = doc(db, 'students', user.uid);
+                            const remainingHours = await fetchRemainingHours(userDocRef);
+                            updateRemainingHoursDisplay(remainingHours);
+                        }
+                    });
+                }
+            });
+
+            // Logout
+            document.getElementById('logout-button').addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    window.location.href = 'login.html';
+                }).catch((error) => {
+                    console.error('Logout error:', error);
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
