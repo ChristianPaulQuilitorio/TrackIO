@@ -96,8 +96,38 @@
 
         const db = getFirestore();
         const auth = getAuth();
+        let countdownInterval = null;
 
-        // Fetch the remaining hours from Firestore
+        // Format seconds to HH:MM:SS
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Start and update countdown timer
+        function startCountdown(remainingHours) {
+            const countdownDisplay = document.getElementById('countdown-display');
+            let totalSeconds = Math.floor(remainingHours * 3600); // Convert hours to seconds
+
+            if (countdownInterval) clearInterval(countdownInterval); // Clear previous interval
+
+            function updateCountdown() {
+                if (totalSeconds > 0) {
+                    countdownDisplay.textContent = formatTime(totalSeconds);
+                    totalSeconds--;
+                } else {
+                    countdownDisplay.textContent = "00:00:00";
+                    clearInterval(countdownInterval); // Stop countdown at 0
+                }
+            }
+
+            updateCountdown(); // Initial display
+            countdownInterval = setInterval(updateCountdown, 1000); // Update every second
+        }
+
+        // Fetch remaining hours from Firestore
         async function fetchRemainingHours(userDocRef) {
             try {
                 const userDoc = await getDoc(userDocRef);
@@ -112,16 +142,19 @@
             }
         }
 
-        // Update the displayed remaining hours
-        function updateRemainingHoursDisplay(remainingHours) {
+        // Update remaining hours and start countdown
+        async function updateRemainingHoursDisplay(remainingHours) {
             document.getElementById('dashboard-remaining-hours').textContent = remainingHours;
+            startCountdown(remainingHours);
         }
 
-        // On page load
+        // Main auth and data logic
         document.addEventListener('DOMContentLoaded', () => {
-            // Listen for changes in the user's authentication state
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
+                    document.getElementById('user-name').textContent = user.displayName || 'Student';
+                    document.getElementById('user-email').textContent = user.email || 'N/A';
+
                     const userDocRef = doc(db, 'students', user.uid);
                     const remainingHours = await fetchRemainingHours(userDocRef);
                     updateRemainingHoursDisplay(remainingHours);
@@ -130,7 +163,7 @@
                 }
             });
 
-            // Listen for updates to remaining hours from work-details.html via localStorage
+            // Update from localStorage flag
             window.addEventListener('storage', (event) => {
                 if (event.key === 'remainingHoursUpdated' && event.newValue === 'true') {
                     localStorage.removeItem('remainingHoursUpdated');
@@ -143,14 +176,14 @@
                     });
                 }
             });
-        });
 
-        // Logout functionality
-        document.getElementById('logout-button').addEventListener('click', () => {
-            auth.signOut().then(() => {
-                window.location.href = 'login.html'; // Redirect to login page after logout
-            }).catch((error) => {
-                console.error('Logout error:', error);
+            // Logout
+            document.getElementById('logout-button').addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    window.location.href = 'login.html';
+                }).catch((error) => {
+                    console.error('Logout error:', error);
+                });
             });
         });
     </script>

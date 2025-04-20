@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutButton = document.getElementById('logout-button');
 
     let isCheckedIn = false;
-    let remainingHours = 200;
+    let remainingHours = 0;
 
     // Function to get the current date and time in MM/DD/YY and 12-hour format
     function getCurrentDateTime() {

@@ -2,7 +2,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import {
   getAuth,
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   setPersistence,
   browserLocalPersistence,
@@ -12,7 +11,6 @@ import {
 import {
   getFirestore,
   doc,
-  setDoc,
   getDoc,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
@@ -25,14 +23,14 @@ import {
 
 // Firebase config
 const firebaseConfig = {
-    apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
-    authDomain: "trackio-f5b07.firebaseapp.com",
-    projectId: "trackio-f5b07",
-    storageBucket: "trackio-f5b07.firebasestorage.app",
-    messagingSenderId: "1083789426923",
-    appId: "1:1083789426923:web:c372749a28e84ff9cd7eae",
-    measurementId: "G-DSPVFG2CYW"
-  };
+  apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
+  authDomain: "trackio-f5b07.firebaseapp.com",
+  projectId: "trackio-f5b07",
+  storageBucket: "trackio-f5b07.appspot.com",
+  messagingSenderId: "1083789426923",
+  appId: "1:1083789426923:web:c372749a28e84ff9cd7eae",
+  measurementId: "G-DSPVFG2CYW"
+};
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -77,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginBtn = document.getElementById("submitLogin");
   const logoutBtn = document.getElementById("logout-button");
 
+  // 🟢 REGISTER: Save to localStorage and go to verify page
   if (registerBtn) {
     registerBtn.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -97,29 +96,16 @@ document.addEventListener("DOMContentLoaded", () => {
         return showMessage("Password must be at least 6 characters.", "signUpMessage");
       }
 
-      try {
-        const { user } = await createUserWithEmailAndPassword(auth, email, password);
-        
-        // Save company details to Firestore
-        await setDoc(doc(db, "companies", user.uid), {
-          companyName,
-          email,
-          proofUploaded: false,
-          openForOJT: false,
-          uid: user.uid,
-          accountType: "company",
-          location: null
-        });
+      // Save data temporarily to complete verification
+      localStorage.setItem("pendingVerificationEmail", email);
+      localStorage.setItem("tempPassword", password);
+      localStorage.setItem("tempCompanyName", companyName);
 
-        showMessage("Registration successful! Redirecting...", "signUpMessage");
-        setTimeout(() => (window.location.href = "company-dashboard.html"), 2000);
-      } catch (error) {
-        showMessage(handleAuthError(error.code), "signUpMessage");
-      }
+      window.location.href = "company-verify.html";
     });
   }
 
-  // Login functionality
+  // 🔵 LOGIN
   if (loginBtn) {
     loginBtn.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -133,6 +119,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const { user } = await signInWithEmailAndPassword(auth, email, password);
+        if (!user.emailVerified) {
+          return showMessage("Please verify your email first.", "loginMessage");
+        }
+
         const docRef = doc(db, "companies", user.uid);
         const docSnap = await getDoc(docRef);
 
@@ -148,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Logout functionality
+  // 🔴 LOGOUT
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
@@ -157,23 +147,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Auth state listener
+// 🔁 AUTH STATE LISTENER
 onAuthStateChanged(auth, async (user) => {
   const path = window.location.pathname;
 
-  // If the user is not logged in and trying to access the dashboard, redirect to login
   if (!user && path.includes("company-dashboard")) {
     window.location.href = "company-index.html";
     return;
   }
 
-  // If logged in, load the company profile page
   if (user && path.includes("company-profile")) {
     await loadCompanyProfile(user);
   }
 });
 
-// Load company profile data
+// 📋 LOAD PROFILE
 async function loadCompanyProfile(user) {
   const nameEl = document.getElementById("companyName");
   const descEl = document.getElementById("companyDescription");
@@ -191,24 +179,17 @@ async function loadCompanyProfile(user) {
     descEl.value = data.description || "";
     typeEl.value = data.type || "";
     openOJTEl.checked = !!data.openForOJT;
+    photoEl.src = data.photoURL || "../img/sample-profile.jpg";
 
-    if (data.photoURL) {
-      photoEl.src = data.photoURL;
-    } else {
-      photoEl.src = "../img/sample-profile.jpg";
-    }
-
-    if (data.location) {
-      locationEl.textContent = `Saved location: ${data.locationName || "Not specified"}`;
-    } else {
-      locationEl.textContent = "No location set.";
-    }
+    locationEl.textContent = data.location
+      ? `Saved location: ${data.locationName || "Not specified"}`
+      : "No location set.";
   } catch (err) {
     console.error("Error loading profile:", err);
   }
 }
 
-// Profile image upload functionality
+// 🖼 UPLOAD PROFILE PHOTO
 const uploadEl = document.getElementById("uploadPhoto");
 if (uploadEl) {
   uploadEl.addEventListener("change", async (e) => {
