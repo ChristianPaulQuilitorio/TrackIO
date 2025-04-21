@@ -13,9 +13,7 @@
 </head>
 
 <body>
-    <div id="countdown-container">
-        <p>Remaining Time: <span id="countdown-display">Loading...</span></p>
-    </div>
+   
 
     <header class="main-header">
         <button class="burger-button" aria-label="Toggle Navigation">☰</button>
@@ -63,19 +61,16 @@
         </a>
     </nav>
 
+<!-- Main Countdown and Action Section -->
 <div class="check-in-container">
-    <!-- Remaining Hours -->
     <div class="remaining-hours">
-        <p>Remaining Hours: <span id="dashboard-remaining-hours">200</span> hours</p>
+        <p>Remaining Time: <span id="countdown-display">Loading...</span></p>
+        <p>Worked Duration: <span id="worked-duration">--:--:--</span></p>
     </div>
-
-    <!-- Check-In/Check-Out Time -->
     <div class="time-inputs">
         <input type="text" id="start-time" placeholder="Check-In Time" readonly />
         <input type="text" id="end-time" placeholder="Check-Out Time" readonly />
     </div>
-
-    <!-- Action Buttons -->
     <div class="check-buttons">
         <button id="check-in-button">Check In</button>
         <button id="check-out-btn" style="display: none;">Check Out</button>
@@ -102,103 +97,170 @@
     <!-- FullCalendar JS -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <script type="module" src="student-script.js"></script> <!-- Link to external JavaScript -->
-    <script type="module">
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    
+    <script type="module">  
+        import { onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-
+        
         const db = getFirestore();
         const auth = getAuth();
+        
         let countdownInterval = null;
-
-        // Format seconds to HH:MM:SS
+        let totalSeconds = 0;
+        
         function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return "00:00:00";
             const hrs = Math.floor(seconds / 3600);
             const mins = Math.floor((seconds % 3600) / 60);
             const secs = seconds % 60;
             return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
-
-        // Start and update countdown timer
-        function startCountdown(remainingHours) {
-            const countdownDisplay = document.getElementById('countdown-display');
-            let totalSeconds = Math.floor(remainingHours * 3600); // Convert hours to seconds
-
-            if (countdownInterval) clearInterval(countdownInterval); // Clear previous interval
-
-            function updateCountdown() {
+        
+        function updateCountdownDisplay(seconds) {
+            document.getElementById('countdown-display').textContent = formatTime(seconds);
+        }
+        
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
                 if (totalSeconds > 0) {
-                    countdownDisplay.textContent = formatTime(totalSeconds);
                     totalSeconds--;
+                    updateCountdownDisplay(totalSeconds);
                 } else {
-                    countdownDisplay.textContent = "00:00:00";
-                    clearInterval(countdownInterval); // Stop countdown at 0
+                    clearInterval(countdownInterval);
+                    updateCountdownDisplay(0);
                 }
-            }
-
-            updateCountdown(); // Initial display
-            countdownInterval = setInterval(updateCountdown, 1000); // Update every second
+            }, 1000);
         }
-
-        // Fetch remaining hours from Firestore
+        
+        function stopCountdown() {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+        
         async function fetchRemainingHours(userDocRef) {
-            try {
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    return userDoc.data().remainingHours || 0;
-                }
-                return 0; // Default to 0 if data doesn't exist
-            } catch (error) {
-                console.error('Error fetching remaining hours:', error);
-                alert('Failed to fetch remaining hours. Please try again later.');
-                return 0; // Return 0 in case of error
-            }
+            const userDoc = await getDoc(userDocRef);
+            return userDoc.exists() ? userDoc.data().remainingHours || 0 : 0;
         }
-
-        // Update remaining hours and start countdown
-        async function updateRemainingHoursDisplay(remainingHours) {
-            document.getElementById('dashboard-remaining-hours').textContent = remainingHours;
-            startCountdown(remainingHours);
-        }
-
-        // Main auth and data logic
+        
         document.addEventListener('DOMContentLoaded', () => {
+            const checkInBtn = document.getElementById('check-in-button');
+            const checkOutBtn = document.getElementById('check-out-btn');
+        
             onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    document.getElementById('user-name').textContent = user.displayName || 'Student';
-                    document.getElementById('user-email').textContent = user.email || 'N/A';
-
-                    const userDocRef = doc(db, 'students', user.uid);
-                    const remainingHours = await fetchRemainingHours(userDocRef);
-                    updateRemainingHoursDisplay(remainingHours);
-                } else {
+                if (!user) {
                     alert('No user is signed in. Please log in.');
+                    return;
                 }
-            });
+        
+                const userDocRef = doc(db, 'students', user.uid);
+                document.getElementById('user-name').textContent = user.displayName || 'Student';
+                document.getElementById('user-email').textContent = user.email || 'N/A';
+        
+                let remainingHours = await fetchRemainingHours(userDocRef);
+                localStorage.setItem('savedRemainingHours', remainingHours);
+        
+                // Show last worked session (optional)
+                const userDocSnap = await getDoc(userDocRef);
+                const lastSession = userDocSnap.data()?.lastWorkedSession;
+                if (lastSession?.durationFormatted) {
+                    document.getElementById('worked-duration').textContent = lastSession.durationFormatted;
+                }
+        
+                const checkInTimeStr = localStorage.getItem('checkInTime');
+                const isCountingDown = localStorage.getItem('isCountingDown') === 'true';
+        
+                if (isCountingDown && checkInTimeStr) {
+                    const checkInTime = parseInt(checkInTimeStr);
+                    if (!isNaN(checkInTime)) {
+                        const elapsed = Math.floor((Date.now() - checkInTime) / 1000);
+                        totalSeconds = Math.max(Math.floor(remainingHours * 3600) - elapsed, 0);
+                        checkInBtn.style.display = 'none';
+                        checkOutBtn.style.display = 'inline-block';
+                        startCountdown();
+                    } else {
+                        totalSeconds = Math.floor(remainingHours * 3600);
+                        updateCountdownDisplay(totalSeconds);
+                    }
+                } else {
+                    totalSeconds = Math.floor(remainingHours * 3600);
+                    updateCountdownDisplay(totalSeconds);
+                    checkInBtn.style.display = 'inline-block';
+                    checkOutBtn.style.display = 'none';
+                }
+        
+                // ✅ Check In
+                checkInBtn.addEventListener('click', () => {
+                    const now = Date.now();
+                    localStorage.setItem('checkInTime', now.toString());
+                    localStorage.setItem('isCountingDown', 'true');
+                    checkInBtn.style.display = 'none';
+                    checkOutBtn.style.display = 'inline-block';
+                    startCountdown();
+                    document.getElementById('start-time').value = new Date(now).toLocaleTimeString();
+                });
+        
+               // ✅ Check Out
+checkOutBtn.addEventListener('click', async () => {
+    stopCountdown();
 
-            // Update from localStorage flag
-            window.addEventListener('storage', (event) => {
-                if (event.key === 'remainingHoursUpdated' && event.newValue === 'true') {
-                    localStorage.removeItem('remainingHoursUpdated');
-                    onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            const userDocRef = doc(db, 'students', user.uid);
-                            const remainingHours = await fetchRemainingHours(userDocRef);
-                            updateRemainingHoursDisplay(remainingHours);
-                        }
+    const checkInTime = parseInt(localStorage.getItem('checkInTime'));
+    if (isNaN(checkInTime)) {
+        alert("Check-in time is invalid or missing.");
+        return;
+    }
+
+    const now = Date.now();
+    const elapsed = Math.floor((now - checkInTime) / 1000);
+    const deductedHours = elapsed / 3600;
+
+    // Fetch latest remaining
+    remainingHours = await fetchRemainingHours(userDocRef);
+    const newRemaining = Math.max(remainingHours - deductedHours, 0);
+
+    // Save remaining + session log
+    const sessionLog = {
+        timestamp: new Date(),
+        durationSeconds: elapsed,
+        durationFormatted: formatTime(elapsed),
+    };
+
+    await updateDoc(userDocRef, {
+        remainingHours: newRemaining,
+        lastWorkedSession: sessionLog,
+    });
+
+    // Update display
+    document.getElementById('worked-duration').textContent = sessionLog.durationFormatted;
+    document.getElementById('end-time').value = new Date(now).toLocaleTimeString();
+
+    localStorage.setItem('savedRemainingHours', newRemaining);
+    localStorage.setItem('isCountingDown', 'false');
+    localStorage.removeItem('checkInTime');
+
+    totalSeconds = Math.floor(newRemaining * 3600);
+    updateCountdownDisplay(totalSeconds);
+
+    // Hide both check-in and check-out buttons
+    checkInBtn.style.display = 'none';
+    checkOutBtn.style.display = 'none';
+});
+
+        
+                // ✅ Logout
+                document.getElementById('logout-button').addEventListener('click', () => {
+                    auth.signOut().then(() => {
+                        localStorage.clear();
+                        window.location.href = 'login.html';
                     });
-                }
-            });
-
-            // Logout
-            document.getElementById('logout-button').addEventListener('click', () => {
-                auth.signOut().then(() => {
-                    window.location.href = 'login.html';
-                }).catch((error) => {
-                    console.error('Logout error:', error);
                 });
             });
         });
-    </script>
+        </script>
+
+
+    
 </body>
 
 </html>
