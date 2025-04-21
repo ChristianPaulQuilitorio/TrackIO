@@ -1,91 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Profile</title>
-    <link rel="stylesheet" href="../styles.css"> <!-- Link to shared CSS -->
-    <link rel="stylesheet" href="company-style.css"> <!-- Link to company-specific CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module" src="company-auth.js" defer></script> <!-- Profile-specific script -->
-    </head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Company Profile</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="company-style.css" />
+  <link rel="stylesheet" href="company-profile-style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  
+  <script type="module" src="company-profile.js" defer></script>
+</head>
 <body>
-    <header class="main-header">
-<button class="burger-button" aria-label="Toggle Navigation">
-            ☰
-        </button>
-        <nav class="right-header-nav">
-            <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
-        <img src="../img/notification.png" alt="Notification Icon">
-        </a>
-            <a href="company-profile.html" class="icon-link" aria-label="Profile">
-                <img src="../img/profile.png" alt="Profile Icon">
-            </a>
-            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button> <!-- Logout Button -->
-        </nav>
-    </header>
-    <nav class="navbar">
-        <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
-            <img src="../img/Company-Finder.png" alt="Company Finder Icon">
-            <span>Company Finder</span>
-        </a>
-        <a href="#work-details" class="nav-item" aria-label="Work Details">
-            <img src="../img/Work-Details.png" alt="Work Details Icon">
-            <span>Work Details</span>
-        </a>
-        <a href="#documentation" class="nav-item" aria-label="Documentation">
-            <img src="../img/Documentation.png" alt="Documentation Icon">
-            <span>Documentation</span>
-        </a>
-        <a href="#about" class="nav-item" aria-label="About">
-            <img src="../img/about.png" alt="About Icon">
-            <span>About</span>
-        </a>
+  <header class="main-header">
+    <button class="burger-button" aria-label="Toggle Navigation">☰</button>
+    <nav class="right-header-nav">
+      <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
+        <img src="../img/notification.png" alt="Notification Icon" />
+      </a>
+      <a href="company-profile.html" class="icon-link" aria-label="Profile">
+        <img src="../img/profile.png" alt="Profile Icon" />
+      </a>
+      <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button>
     </nav>
+  </header>
 
-    <main class="profile-container">
-        <!-- Profile Picture and Company Info -->
-        <div class="profile-section">
-            <div class="profile-photo-container">
-                <img id="companyPhoto" src="../img/sample-profile.jpg" alt="Company Photo">
-                <input type="file" id="uploadPhoto" accept="image/*">
-            </div>
-            <div class="company-info">
-                <input type="text" id="companyName" placeholder="Company Name">
-                <textarea id="companyDescription" placeholder="Company Description"></textarea>
-                <label>
-                    <span>Company Type:</span>
-                    <input type="text" id="companyType" placeholder="Type of Business">
-                </label>
-                <label>
-                    <span>Open for OJT:</span>
-                    <input type="checkbox" id="openForOJT">
-                </label>
-            </div>
-        </div>
+  <nav class="navbar">
+    <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
+      <img src="../img/Company-Finder.png" alt="Company Finder Icon" />
+      <span>Company Finder</span>
+    </a>
+    <a href="#work-details" class="nav-item" aria-label="Work Details">
+      <img src="../img/Work-Details.png" alt="Work Details Icon" />
+      <span>Work Details</span>
+    </a>
+    <a href="#documentation" class="nav-item" aria-label="Documentation">
+      <img src="../img/Documentation.png" alt="Documentation Icon" />
+      <span>Documentation</span>
+    </a>
+    <a href="#about" class="nav-item" aria-label="About">
+      <img src="../img/about.png" alt="About Icon" />
+      <span>About</span>
+    </a>
+  </nav>
 
-        <!-- Map Section -->
-        <div class="map-section">
-            <p id="locationMessage">Saved location: Not set</p>
-            <div class="map-controls">
-                <input type="text" id="locationSearch" placeholder="Search for a location">
-                <button id="searchLocation">Search</button>
-            </div>
-            <div id="map"></div>
-            <div class="map-controls">
-                <label>
-                    <input type="checkbox" id="satelliteToggle">
-                    Satellite View
-                </label>
-                <button id="saveLocation">Save Location</button>
-            </div>
-        </div>
+  <main class="profile-container">
+    <!-- Profile Section -->
+    <div class="profile-section">
+      <div class="profile-photo-container">
+        <!-- Profile Preview and Upload -->
+        <img id="profilePreview" src="../img/sample-profile.png" alt="Profile Picture" style="max-width: 200px; display: block; margin-top: 10px;" />
+        <input type="file" id="uploadPhoto" accept="image/*" />
+      </div>
+      <div class="company-info">
+        <input type="text" id="companyName" placeholder="Company Name" />
+        <textarea id="companyDescription" placeholder="Company Description"></textarea>
+        <label>
+          <span>Company Type:</span>
+          <input type="text" id="companyType" placeholder="Type of Business" />
+        </label>
+        <label>
+          <span>Open for OJT:</span>
+          <input type="checkbox" id="openForOJT" />
+        </label>
+        <!-- Business Proof Upload -->
+        <label>
+          <span>Upload Business Proof:</span>
+          <p id="proofNote" style="font-size: 12px; color: gray;">Allowed file types: Images (.jpg, .jpeg, .png) and PDFs (.pdf)</p>
+        </label>
+      </div>
+    </div>
 
-        <!-- Save Profile -->
-        <div class="save-profile">
-            <button id="saveProfile">Save Profile</button>
-        </div>
-    </main>
+    <!-- Map Section -->
+    <div class="map-section">
+      <p id="locationMessage">Saved location: Not set</p>
+      <div class="map-controls">
+        <input type="text" id="locationSearch" placeholder="Search for a location" autocomplete="off" />
+        <div id="suggestions"></div>
+        <button id="searchLocation">Search</button>
+      </div>
+      <div id="map" style="height: 500px;"></div>
+      <div class="map-controls">
+        <label>
+          <input type="checkbox" id="satelliteToggle" />
+          Satellite View
+        </label>
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="save-profile">
+      <button id="saveProfile">Save Profile</button>
+      <button id="editProfile" style="display: none;">Edit</button>
+    </div>
+  </main>
 </body>
 </html>

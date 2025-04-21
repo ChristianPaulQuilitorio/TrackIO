@@ -147,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let checkInTime = null;
 let checkOutTime = null;
 let isCheckedIn = false;
+let countdownInterval = null;
 
 const checkInButton = document.getElementById('check-in-button');
 const checkOutButton = document.getElementById("check-out-btn");
@@ -154,6 +155,17 @@ const startTimeInput = document.getElementById('start-time');
 const endTimeInput = document.getElementById('end-time');
 const remainingHoursElement = document.getElementById('dashboard-remaining-hours');
 const calendarEl = document.getElementById('calendar');
+
+// ✅ Create countdown element if not exists
+let countdownEl = document.getElementById("countdown-timer");
+if (!countdownEl) {
+    countdownEl = document.createElement("span");
+    countdownEl.id = "countdown-timer";
+    countdownEl.style.display = "block";
+    countdownEl.style.marginTop = "10px";
+    countdownEl.style.fontWeight = "bold";
+    document.querySelector('.check-in-container')?.appendChild(countdownEl);
+}
 
 // Helper: Format date to YYYY-MM-DD in Asia/Manila
 function getCurrentDate() {
@@ -173,6 +185,37 @@ function convertTo24HourFormat(timeStr) {
     if (modifier === 'PM' && hours < 12) hours += 12;
     if (modifier === 'AM' && hours === 12) hours = 0;
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+}
+
+// ✅ Countdown Timer Function
+function startCountdown() {
+    if (!checkInTime) return;
+
+    const checkInDate = new Date();
+    checkInDate.setHours(0, 0, 0, 0); // Reset time to 00:00:00 for start
+
+    clearInterval(countdownInterval); // clear existing
+
+    countdownInterval = setInterval(() => {
+        const now = new Date();
+        const diffMs = now - checkInDate; // calculate time difference
+
+        const hours = Math.floor(diffMs / 3600000);
+        const minutes = Math.floor((diffMs % 3600000) / 60000);
+
+        // Format timer as 1hr 30m
+        let timeString = '';
+        if (hours > 0) timeString += `${hours}hr `;
+        if (minutes > 0) timeString += `${minutes}m`;
+
+        countdownEl.textContent = `Time Elapsed: ${timeString}`;
+    }, 1000);
+}
+
+// ✅ Stop Timer
+function stopCountdown() {
+    clearInterval(countdownInterval);
+    countdownEl.textContent = '';
 }
 
 // Store/Update Check-in/out Data
@@ -213,6 +256,7 @@ async function loadCalendarEvents(user) {
         const checkInOutData = studentDoc.data().checkInOutData || [];
         const events = checkInOutData.flatMap((entry, index) => {
             const date = entry.date;
+
             const checkInEvent = entry.checkInTime ? {
                 id: `${index}-checkIn`,
                 title: `Check-In: ${entry.checkInTime}`,
@@ -229,6 +273,12 @@ async function loadCalendarEvents(user) {
                 extendedProps: { index, type: 'checkOut' }
             } : null;
 
+            // Add countdown timer to check-in event (if available)
+            if (checkInEvent && !checkOutEvent) {
+                const countdownTime = `Time Elapsed: ${formatTimeElapsed(entry.checkInTime)}`;
+                checkInEvent.title = `${checkInEvent.title} (${countdownTime})`;
+            }
+
             return [checkInEvent, checkOutEvent].filter(e => e);
         });
 
@@ -238,7 +288,6 @@ async function loadCalendarEvents(user) {
         console.error("Error loading calendar events:", error);
     }
 }
-
 // Delete Event
 async function deleteEvent(user, eventId) {
     if (!user?.uid) return console.error("No authenticated user found.");
@@ -276,7 +325,19 @@ async function resetDataForCurrentDate(user) {
     }
 }
 
-// Calendar Initialization
+// Helper Function to Format Elapsed Time
+function formatTimeElapsed(startTime) {
+    const startDate = new Date();
+    const currentTime = new Date();
+
+    let diffInMs = currentTime - startDate;
+
+    const hours = Math.floor(diffInMs / 3600000);
+    const minutes = Math.floor((diffInMs % 3600000) / 60000);
+    return `${hours}hr ${minutes}m`;  // Format it as 1hr 30m
+}
+
+// Calendar Initialization (with updates for timer)
 const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     headerToolbar: {
@@ -312,6 +373,7 @@ auth.onAuthStateChanged(async (user) => {
         startTimeInput.value = checkInTime;
         checkInButton.style.display = 'none';
         checkOutButton.style.display = 'inline-block';
+        startCountdown(checkInTime); // ✅ start countdown if already checked in
     } else if (todayEntry?.checkInTime && todayEntry?.checkOutTime) {
         startTimeInput.value = todayEntry.checkInTime;
         endTimeInput.value = todayEntry.checkOutTime;
@@ -352,6 +414,7 @@ checkInButton.addEventListener('click', async () => {
 
     checkInButton.style.display = 'none';
     checkOutButton.style.display = 'inline-block';
+    startCountdown(checkInTime); // ✅ Start countdown
 
     console.log(`Checked in at: ${checkInTime}`);
 });
@@ -371,6 +434,7 @@ checkOutButton.addEventListener('click', async () => {
 
     checkInButton.style.display = 'none';
     checkOutButton.style.display = 'none';
+    stopCountdown(); // ✅ Stop countdown
 
     alert("Check-out successful!");
     await loadCalendarEvents(user);
@@ -395,10 +459,12 @@ resetButton.addEventListener('click', async () => {
 
     checkInButton.style.display = 'inline-block';
     checkOutButton.style.display = 'none';
+    stopCountdown(); // ✅ stop timer on reset
 
     await resetDataForCurrentDate(user);
     await loadCalendarEvents(user);
 });
+
 
 //END Check in and check ouut
 
