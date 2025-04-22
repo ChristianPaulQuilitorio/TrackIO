@@ -187,30 +187,34 @@ function convertTo24HourFormat(timeStr) {
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
 }
 
-// ✅ Countdown Timer Function
-function startCountdown() {
-    if (!checkInTime) return;
+function startCountdown(checkInTimeStr) {
+    if (!checkInTimeStr) return;
 
-    const checkInDate = new Date();
-    checkInDate.setHours(0, 0, 0, 0); // Reset time to 00:00:00 for start
+    clearInterval(countdownInterval);
 
-    clearInterval(countdownInterval); // clear existing
+    const now = new Date();
+    const [time, modifier] = checkInTimeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (modifier === 'PM' && hours < 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+
+    const checkInDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
 
     countdownInterval = setInterval(() => {
-        const now = new Date();
-        const diffMs = now - checkInDate; // calculate time difference
+        const current = new Date();
+        const diffMs = current - checkInDate;
 
-        const hours = Math.floor(diffMs / 3600000);
-        const minutes = Math.floor((diffMs % 3600000) / 60000);
+        if (diffMs <= 0) {
+            countdownEl.textContent = `Time Elapsed: 0m`;
+            return;
+        }
 
-        // Format timer as 1hr 30m
-        let timeString = '';
-        if (hours > 0) timeString += `${hours}hr `;
-        if (minutes > 0) timeString += `${minutes}m`;
-
-        countdownEl.textContent = `Time Elapsed: ${timeString}`;
+        const hoursElapsed = Math.floor(diffMs / 3600000);
+        const minutesElapsed = Math.floor((diffMs % 3600000) / 60000);
+        countdownEl.textContent = `Duration: ${hoursElapsed > 0 ? `${hoursElapsed}hr ` : ''}${minutesElapsed}m`;
     }, 1000);
 }
+
 
 // ✅ Stop Timer
 function stopCountdown() {
@@ -218,7 +222,7 @@ function stopCountdown() {
     countdownEl.textContent = '';
 }
 
-// Store/Update Check-in/out Data
+// Store/Update Check-in/out Data (with duration)
 async function storeCheckInOutData(user, checkInTime, checkOutTime) {
     if (!user?.uid) return console.error("No authenticated user found.");
     try {
@@ -231,11 +235,29 @@ async function storeCheckInOutData(user, checkInTime, checkOutTime) {
 
         if (existingIndex !== -1) {
             const updatedEntry = { ...checkInOutData[existingIndex] };
+
             if (checkInTime && !updatedEntry.checkInTime) updatedEntry.checkInTime = checkInTime;
             if (checkOutTime && !updatedEntry.checkOutTime) updatedEntry.checkOutTime = checkOutTime;
+
+            // Calculate duration if both check-in and check-out times exist
+            if (updatedEntry.checkInTime && updatedEntry.checkOutTime) {
+                updatedEntry.duration = calculateDuration(updatedEntry.checkInTime, updatedEntry.checkOutTime);
+            }
+
             checkInOutData[existingIndex] = updatedEntry;
         } else {
-            checkInOutData.push({ checkInTime: checkInTime || null, checkOutTime: checkOutTime || null, date: currentDate });
+            // Calculate duration if both check-in and check-out times exist
+            const newEntry = { 
+                checkInTime: checkInTime || null, 
+                checkOutTime: checkOutTime || null, 
+                date: currentDate 
+            };
+
+            if (newEntry.checkInTime && newEntry.checkOutTime) {
+                newEntry.duration = calculateDuration(newEntry.checkInTime, newEntry.checkOutTime);
+            }
+
+            checkInOutData.push(newEntry);
         }
 
         await updateDoc(studentDocRef, { checkInOutData });
@@ -244,6 +266,61 @@ async function storeCheckInOutData(user, checkInTime, checkOutTime) {
         console.error("Error saving check-in/out data:", error);
     }
 }
+
+// Assume you have a predefined required total hours for the student
+const totalRequiredHours = 40; // e.g., 40 hours per week
+
+// Function to calculate total worked hours
+function calculateTotalWorkedHours(checkInOutData) {
+    let totalWorkedMinutes = 0;
+    
+    checkInOutData.forEach(entry => {
+        if (entry.checkInTime && entry.checkOutTime) {
+            const duration = calculateDuration(entry.checkInTime, entry.checkOutTime); // Calculate duration
+            const [hours, minutes] = duration.split('hr').map(str => parseInt(str.trim().replace('m', ''))); // Parse hours and minutes
+            totalWorkedMinutes += (hours * 60) + minutes;
+        }
+    });
+    
+    return totalWorkedMinutes;
+}
+
+// Function to update remaining hours
+async function updateRemainingHours(user) {
+    if (!user?.uid) return;
+
+    try {
+        const studentDocRef = doc(db, "students", user.uid);
+        const studentDoc = await getDoc(studentDocRef);
+
+        if (!studentDoc.exists()) return;
+
+        const checkInOutData = studentDoc.data().checkInOutData || [];
+        const totalWorkedMinutes = calculateTotalWorkedHours(checkInOutData);
+        
+        // Calculate remaining minutes and convert back to hours and minutes
+        const remainingMinutes = (totalRequiredHours * 60) - totalWorkedMinutes;
+        const remainingHours = Math.floor(remainingMinutes / 60);
+        const remainingMins = remainingMinutes % 60;
+        
+        // Find the element by ID and update it with remaining hours
+        const remainingHoursElement = document.getElementById('remaining-hours');
+        if (remainingHoursElement) {
+            remainingHoursElement.textContent = `Remaining Hours: ${remainingHours}hr ${remainingMins}m`;
+        }
+
+    } catch (error) {
+        console.error("Error updating remaining hours:", error);
+    }
+}
+
+// Call this function to update the remaining hours when the user logs in or after an action
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        await updateRemainingHours(user);
+    }
+});
+
 
 // Load Calendar Events
 async function loadCalendarEvents(user) {
@@ -256,6 +333,7 @@ async function loadCalendarEvents(user) {
         const checkInOutData = studentDoc.data().checkInOutData || [];
         const events = checkInOutData.flatMap((entry, index) => {
             const date = entry.date;
+            const duration = entry.duration || 'N/A';  // Assuming 'duration' is stored in Firestore
 
             const checkInEvent = entry.checkInTime ? {
                 id: `${index}-checkIn`,
@@ -267,27 +345,30 @@ async function loadCalendarEvents(user) {
 
             const checkOutEvent = entry.checkOutTime ? {
                 id: `${index}-checkOut`,
-                title: `Check-Out: ${entry.checkOutTime}`,
+                title: `Check-Out: ${entry.checkOutTime} (Duration: ${duration})`,
                 start: `${date}T${convertTo24HourFormat(entry.checkOutTime)}`,
                 color: '#f44336',
                 extendedProps: { index, type: 'checkOut' }
             } : null;
 
             // Add countdown timer to check-in event (if available)
-            if (checkInEvent && !checkOutEvent) {
+            const today = getCurrentDate();
+            if (checkInEvent && !checkOutEvent && date === today) {
                 const countdownTime = `Time Elapsed: ${formatTimeElapsed(entry.checkInTime)}`;
                 checkInEvent.title = `${checkInEvent.title} (${countdownTime})`;
             }
-
+            
             return [checkInEvent, checkOutEvent].filter(e => e);
         });
 
+        // Remove all events and add the new ones
         calendar.removeAllEvents();
         calendar.addEventSource(events);
     } catch (error) {
         console.error("Error loading calendar events:", error);
     }
 }
+
 // Delete Event
 async function deleteEvent(user, eventId) {
     if (!user?.uid) return console.error("No authenticated user found.");
@@ -325,17 +406,64 @@ async function resetDataForCurrentDate(user) {
     }
 }
 
-// Helper Function to Format Elapsed Time
-function formatTimeElapsed(startTime) {
-    const startDate = new Date();
-    const currentTime = new Date();
+function formatTimeElapsed(checkInTimeStr) {
+    if (!checkInTimeStr) return "0m";
 
-    let diffInMs = currentTime - startDate;
+    const now = new Date();
+    const [time, modifier] = checkInTimeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
 
-    const hours = Math.floor(diffInMs / 3600000);
-    const minutes = Math.floor((diffInMs % 3600000) / 60000);
-    return `${hours}hr ${minutes}m`;  // Format it as 1hr 30m
+    if (modifier === 'PM' && hours < 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+
+    const checkInDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+    const diffMs = now - checkInDate;
+
+    if (diffMs <= 0) return `0m`;
+
+    const hoursElapsed = Math.floor(diffMs / 3600000);
+    const minutesElapsed = Math.floor((diffMs % 3600000) / 60000);
+    return `${hoursElapsed > 0 ? `${hoursElapsed}hr ` : ''}${minutesElapsed}m`;
 }
+
+function calculateDurationInMs(checkInStr, checkOutStr) {
+    const now = new Date();
+    const [ciTime, ciMod] = checkInStr.split(' ');
+    const [coTime, coMod] = checkOutStr.split(' ');
+
+    let [ciHours, ciMinutes] = ciTime.split(':').map(Number);
+    let [coHours, coMinutes] = coTime.split(':').map(Number);
+
+    if (ciMod === 'PM' && ciHours < 12) ciHours += 12;
+    if (ciMod === 'AM' && ciHours === 12) ciHours = 0;
+    if (coMod === 'PM' && coHours < 12) coHours += 12;
+    if (coMod === 'AM' && coHours === 12) coHours = 0;
+
+    const ciDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ciHours, ciMinutes);
+    const coDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), coHours, coMinutes);
+
+    return Math.max(0, coDate - ciDate);
+}
+
+function calculateDuration(checkInTimeStr, checkOutTimeStr) {
+    // Convert AM/PM time to 24-hour format for both check-in and check-out times
+    const checkInTime24 = convertTo24HourFormat(checkInTimeStr);
+    const checkOutTime24 = convertTo24HourFormat(checkOutTimeStr);
+
+    const checkInDate = new Date(`1970-01-01T${checkInTime24}Z`);
+    const checkOutDate = new Date(`1970-01-01T${checkOutTime24}Z`);
+
+    // Calculate the difference in milliseconds
+    const diffMs = checkOutDate - checkInDate;
+
+    // Convert milliseconds to hours and minutes
+    const hours = Math.floor(diffMs / 3600000);
+    const minutes = Math.floor((diffMs % 3600000) / 60000);
+
+    return `${hours}hr ${minutes}m`;
+}
+
+
 
 // Calendar Initialization (with updates for timer)
 const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -373,8 +501,8 @@ auth.onAuthStateChanged(async (user) => {
         startTimeInput.value = checkInTime;
         checkInButton.style.display = 'none';
         checkOutButton.style.display = 'inline-block';
-        startCountdown(checkInTime); // ✅ start countdown if already checked in
-    } else if (todayEntry?.checkInTime && todayEntry?.checkOutTime) {
+        startCountdown(checkInTime); // ✅ Start countdown
+        } else if (todayEntry?.checkInTime && todayEntry?.checkOutTime) {
         startTimeInput.value = todayEntry.checkInTime;
         endTimeInput.value = todayEntry.checkOutTime;
         checkInButton.style.display = 'none';
@@ -419,7 +547,6 @@ checkInButton.addEventListener('click', async () => {
     console.log(`Checked in at: ${checkInTime}`);
 });
 
-// Check-Out
 checkOutButton.addEventListener('click', async () => {
     const user = auth.currentUser;
     if (!user) return alert("You must be logged in to check out.");
@@ -429,7 +556,9 @@ checkOutButton.addEventListener('click', async () => {
     checkOutTime = now.toLocaleTimeString('en-US', options);
     endTimeInput.value = checkOutTime;
 
-    await storeCheckInOutData(user, null, checkOutTime);
+    // Call storeCheckInOutData to save check-in/check-out times and calculate the duration
+    await storeCheckInOutData(user, checkInTime, checkOutTime);
+
     isCheckedIn = false;
 
     checkInButton.style.display = 'none';
@@ -439,6 +568,7 @@ checkOutButton.addEventListener('click', async () => {
     alert("Check-out successful!");
     await loadCalendarEvents(user);
 });
+
 
 // Reset Button
 const resetButton = document.createElement('button');
@@ -463,6 +593,7 @@ resetButton.addEventListener('click', async () => {
 
     await resetDataForCurrentDate(user);
     await loadCalendarEvents(user);
+    await updateRemainingHours(user);
 });
 
 
@@ -805,125 +936,4 @@ onAuthStateChanged(auth, (user) => {
         console.error("No authenticated user found.");
         window.location.href = "student-login.html"; // Redirect to login if not authenticated
     }
-});
-
-document.addEventListener('DOMContentLoaded', async () => {
-
-    
-
-    // Function to fetch and display events on the calendar
-    async function loadCalendarEvents(user) {
-        if (!user || !user.uid) return;
-
-        try {
-            const studentDocRef = doc(db, "students", user.uid);
-            const studentDoc = await getDoc(studentDocRef);
-
-            if (studentDoc.exists()) {
-                const checkInOutData = studentDoc.data().checkInOutData || [];
-                const events = checkInOutData.flatMap((entry, index) => {
-                    const date = entry.date; // Date in YYYY-MM-DD format
-                    const checkInEvent = entry.checkInTime
-                        ? {
-                            id: `${index}-checkIn`, // Unique ID for the event
-                            title: `Check-In: ${entry.checkInTime}`,
-                            start: `${date}T${convertTo24HourFormat(entry.checkInTime)}`, // Combine date and time
-                            color: '#4CAF50', // Green for Check-In
-                            extendedProps: { index, type: 'checkIn' }, // Custom properties
-                        }
-                        : null;
-                    const checkOutEvent = entry.checkOutTime
-                        ? {
-                            id: `${index}-checkOut`, // Unique ID for the event
-                            title: `Check-Out: ${entry.checkOutTime}`,
-                            start: `${date}T${convertTo24HourFormat(entry.checkOutTime)}`, // Combine date and time
-                            color: '#f44336', // Red for Check-Out
-                            extendedProps: { index, type: 'checkOut' }, // Custom properties
-                        }
-                        : null;
-                    return [checkInEvent, checkOutEvent].filter(event => event !== null);
-                });
-
-                calendar.removeAllEvents(); // Clear existing events
-                calendar.addEventSource(events); // Add new events
-            } else {
-                console.warn("Student document does not exist for UID:", user.uid);
-            }
-        } catch (error) {
-            console.error("Error loading calendar events:", error);
-        }
-    }
-
-    // Function to store check-in and check-out data in Firestore
-    async function storeCheckInOutData(user, checkInTime, checkOutTime) {
-        if (!user || !user.uid) {
-            console.error("No authenticated user found.");
-            return;
-        }
-
-        try {
-            const studentDocRef = doc(db, "students", user.uid);
-            const studentDoc = await getDoc(studentDocRef);
-            let checkInOutData = [];
-
-            if (studentDoc.exists()) {
-                console.log("Student document found:", studentDoc.data());
-                checkInOutData = studentDoc.data().checkInOutData || [];
-            } else {
-                console.warn("Student document does not exist for UID:", user.uid);
-            }
-
-            const currentDate = getCurrentDate(); // Use the helper function to get the current date
-
-            // Add a new entry for the current date
-            checkInOutData.push({
-                checkInTime: checkInTime || null,
-                checkOutTime: checkOutTime || null,
-                date: currentDate
-            });
-
-            // Update Firestore with the modified data
-            await updateDoc(studentDocRef, {
-                checkInOutData: checkInOutData
-            });
-
-            console.log("Check-in and check-out data added successfully in Firestore.");
-        } catch (error) {
-            console.error("Error storing check-in and check-out data in Firestore:", error);
-        }
-    }
-
-    // Function to delete an event from Firestore
-    async function deleteEvent(user, eventId) {
-        if (!user || !user.uid) {
-            console.error("No authenticated user found.");
-            return;
-        }
-
-        try {
-            const studentDocRef = doc(db, "students", user.uid);
-            const studentDoc = await getDoc(studentDocRef);
-
-            if (studentDoc.exists()) {
-                let checkInOutData = studentDoc.data().checkInOutData || [];
-                const [index] = eventId.split('-'); // Extract index from event ID
-
-                // Remove the entire entry for the selected day
-                checkInOutData.splice(index, 1);
-
-                // Update Firestore with the modified data
-                await updateDoc(studentDocRef, {
-                    checkInOutData: checkInOutData
-                });
-
-                console.log(`Data for the selected day (index: ${index}) deleted successfully.`);
-            } else {
-                console.warn("Student document does not exist for UID:", user.uid);
-            }
-        } catch (error) {
-            console.error("Error deleting event from Firestore:", error);
-        }
-    }
-
-
 });
