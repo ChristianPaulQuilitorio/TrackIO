@@ -18,6 +18,18 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
 
+// Global states
+let checkInTime = null;
+let checkOutTime = null;
+let isCheckedIn = false;
+
+// DOM references
+const startTimeInput = document.getElementById("start-time-input");
+const endTimeInput = document.getElementById("end-time-input");
+const checkInButton = document.getElementById("check-in-btn");
+const checkOutButton = document.getElementById("check-out-btn");
+const saveButton = document.getElementById("save-remaining-hours");
+
 // Utility
 function debounce(func, wait) {
     let timeout;
@@ -95,7 +107,6 @@ async function checkOut(userId) {
             const now = Date.now();
             const durationMs = now - checkInTime;
             const hoursWorked = durationMs / (1000 * 60 * 60);
-
             const updatedHours = Math.max(0, (data.remainingHours || 200) - hoursWorked);
 
             await setDoc(docRef, {
@@ -115,34 +126,57 @@ window.addEventListener("load", () => {
     getAuthenticatedUser(async (user) => {
         const userId = user.uid;
         const remainingHours = await fetchRemainingHoursFromFirestore(userId);
-        document.getElementById("remaining-hours-input").value = remainingHours;
+        const remainingHoursInput = document.getElementById("remaining-hours-input");
+        if (remainingHoursInput) {
+            remainingHoursInput.value = remainingHours;
+        } else {
+            console.warn("Element #remaining-hours-input not found.");
+        }
     });
 });
 
 // Save remaining hours
-const saveButton = document.getElementById("save-remaining-hours");
-saveButton.addEventListener("click", debounce(() => {
-    getAuthenticatedUser(async (user) => {
-        const remainingHours = parseFloat(document.getElementById("remaining-hours-input").value);
-        if (isNaN(remainingHours) || remainingHours < 0) {
-            alert("Please enter a valid number for remaining hours.");
-            return;
-        }
+if (saveButton) {
+    saveButton.addEventListener("click", debounce(() => {
+        getAuthenticatedUser(async (user) => {
+            const input = document.getElementById("remaining-hours-input");
+            if (!input) {
+                console.warn("Element #remaining-hours-input not found.");
+                return;
+            }
 
-        await saveRemainingHoursToFirestore(user.uid, remainingHours);
-    });
-}, 300));
+            const remainingHours = parseFloat(input.value);
+            if (isNaN(remainingHours) || remainingHours < 0) {
+                alert("Please enter a valid number for remaining hours.");
+                return;
+            }
+
+            await saveRemainingHoursToFirestore(user.uid, remainingHours);
+        });
+    }, 300));
+} else {
+    console.warn("Element #save-remaining-hours not found.");
+}
 
 // Check-In button listener
-document.getElementById("check-in-btn").addEventListener("click", () => {
-    getAuthenticatedUser(async (user) => {
-        await checkIn(user.uid);
+if (checkInButton) {
+    checkInButton.addEventListener("click", () => {
+        getAuthenticatedUser(async (user) => {
+            await checkIn(user.uid);
+        });
     });
-});
+} else {
+    console.warn("Element #check-in-btn not found.");
+}
 
 // Check-Out button listener
-document.getElementById("check-out-btn").addEventListener("click", () => {
-    getAuthenticatedUser(async (user) => {
-        await checkOut(user.uid);
+if (checkOutButton) {
+    checkOutButton.addEventListener("click", () => {
+        getAuthenticatedUser(async (user) => {
+            await checkOut(user.uid);
+        });
     });
-});
+} else {
+    console.warn("Element #check-out-btn not found.");
+}
+

@@ -267,25 +267,22 @@ async function storeCheckInOutData(user, checkInTime, checkOutTime) {
     }
 }
 
-// Assume you have a predefined required total hours for the student
-const totalRequiredHours = 40; // e.g., 40 hours per week
-
-// Function to calculate total worked hours
+/// Function to calculate total worked hours
 function calculateTotalWorkedHours(checkInOutData) {
     let totalWorkedMinutes = 0;
-    
+
     checkInOutData.forEach(entry => {
         if (entry.checkInTime && entry.checkOutTime) {
-            const duration = calculateDuration(entry.checkInTime, entry.checkOutTime); // Calculate duration
-            const [hours, minutes] = duration.split('hr').map(str => parseInt(str.trim().replace('m', ''))); // Parse hours and minutes
+            const duration = calculateDuration(entry.checkInTime, entry.checkOutTime); // e.g., "2hr 30m"
+            const [hours, minutes] = duration.split('hr').map(str => parseInt(str.trim().replace('m', '')) || 0);
             totalWorkedMinutes += (hours * 60) + minutes;
         }
     });
-    
+
     return totalWorkedMinutes;
 }
 
-// Function to update remaining hours
+// Function to update remaining hours using Firestore's remainingHours field
 async function updateRemainingHours(user) {
     if (!user?.uid) return;
 
@@ -295,15 +292,16 @@ async function updateRemainingHours(user) {
 
         if (!studentDoc.exists()) return;
 
-        const checkInOutData = studentDoc.data().checkInOutData || [];
+        const studentData = studentDoc.data();
+        const checkInOutData = studentData.checkInOutData || [];
         const totalWorkedMinutes = calculateTotalWorkedHours(checkInOutData);
-        
-        // Calculate remaining minutes and convert back to hours and minutes
-        const remainingMinutes = (totalRequiredHours * 60) - totalWorkedMinutes;
-        const remainingHours = Math.floor(remainingMinutes / 60);
-        const remainingMins = remainingMinutes % 60;
-        
-        // Find the element by ID and update it with remaining hours
+
+        const initialRemainingMinutes = (studentData.remainingHours || 0) * 60;
+        const updatedRemainingMinutes = initialRemainingMinutes - totalWorkedMinutes;
+
+        const remainingHours = Math.floor(updatedRemainingMinutes / 60);
+        const remainingMins = updatedRemainingMinutes % 60;
+
         const remainingHoursElement = document.getElementById('remaining-hours');
         if (remainingHoursElement) {
             remainingHoursElement.textContent = `Remaining Hours: ${remainingHours}hr ${remainingMins}m`;
@@ -313,6 +311,14 @@ async function updateRemainingHours(user) {
         console.error("Error updating remaining hours:", error);
     }
 }
+
+// Trigger when user logs in
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        await updateRemainingHours(user);
+    }
+});
+
 
 // Call this function to update the remaining hours when the user logs in or after an action
 auth.onAuthStateChanged(async (user) => {
@@ -424,25 +430,6 @@ function formatTimeElapsed(checkInTimeStr) {
     const hoursElapsed = Math.floor(diffMs / 3600000);
     const minutesElapsed = Math.floor((diffMs % 3600000) / 60000);
     return `${hoursElapsed > 0 ? `${hoursElapsed}hr ` : ''}${minutesElapsed}m`;
-}
-
-function calculateDurationInMs(checkInStr, checkOutStr) {
-    const now = new Date();
-    const [ciTime, ciMod] = checkInStr.split(' ');
-    const [coTime, coMod] = checkOutStr.split(' ');
-
-    let [ciHours, ciMinutes] = ciTime.split(':').map(Number);
-    let [coHours, coMinutes] = coTime.split(':').map(Number);
-
-    if (ciMod === 'PM' && ciHours < 12) ciHours += 12;
-    if (ciMod === 'AM' && ciHours === 12) ciHours = 0;
-    if (coMod === 'PM' && coHours < 12) coHours += 12;
-    if (coMod === 'AM' && coHours === 12) coHours = 0;
-
-    const ciDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ciHours, ciMinutes);
-    const coDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), coHours, coMinutes);
-
-    return Math.max(0, coDate - ciDate);
 }
 
 function calculateDuration(checkInTimeStr, checkOutTimeStr) {
@@ -928,12 +915,12 @@ async function loadStudentProfile(user) {
     }
 }
 
-// Listen for authentication state changes
+
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        loadStudentProfile(user); // Load the profile when the user is authenticated
+        loadStudentProfile(user); 
     } else {
         console.error("No authenticated user found.");
-        window.location.href = "student-login.html"; // Redirect to login if not authenticated
+        window.location.href = "student-login.html"; 
     }
 });
