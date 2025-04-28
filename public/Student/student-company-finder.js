@@ -1,7 +1,7 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+import { getFirestore, collection, query, where, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
     authDomain: "trackio-f5b07.firebaseapp.com",
@@ -12,218 +12,315 @@ const firebaseConfig = {
     measurementId: "G-DSPVFG2CYW"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-let map;
-let marker;
-let customDataset = []; // Custom dataset for companies
-
-// Initialize the map
-function initializeMap() {
-    map = L.map('map').setView([14.5995, 120.9842], 13); // Default location (Manila)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-}
-
-// Add a marker to the map
-function addMarker(company) {
-    if (company.businessLocation && company.businessLocation.lat && company.businessLocation.lng) {
-        const marker = L.marker([company.businessLocation.lat, company.businessLocation.lng]).addTo(map);
-        marker.bindPopup(`<strong>${company.companyName}</strong><br>${company.businessLocation.lat}, ${company.businessLocation.lng}`);
+// Check if user is authenticated first
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        loadCompanies(); // If logged in, fetch companies
     } else {
-        console.warn(`Invalid business location for company: ${company.companyName}`);
+        window.location.href = "../public/Student/login.html"; // Redirect if not logged in
     }
-}
+});
 
-// Fetch companies from Firestore
-async function fetchCompaniesFromFirestore() {
-    const querySnapshot = await getDocs(collection(db, "companies"));
-    querySnapshot.forEach((doc) => {
-        const company = doc.data();
-        if (company.businessLocation) {
-            customDataset.push(company);
-            addMarker(company); // Add a marker for each company
-        }
-    });
-}
 
-// Fetch and display companies open for OJT
-async function fetchOpenForOJTCompanies() {
+// --- Fetch and Display Companies ---
+async function loadCompanies() {
+    const companiesRef = collection(db, "companies");
+    const q = query(companiesRef, where("open_for_ojt", "==", true));
+
     try {
-        const querySnapshot = await getDocs(collection(db, "companies"));
-        const openForOJTCompanies = [];
+        const querySnapshot = await getDocs(q);
+        const companiesList = document.getElementById("companies-list");
 
-        querySnapshot.forEach((doc) => {
-            const company = doc.data();
-            if (company.openForOJT && company.businessLocation) {
-                openForOJTCompanies.push(company);
-                addMarker(company); // Add a marker for each company on the map
+        querySnapshot.forEach((docSnap) => {
+            const company = docSnap.data();
+
+            const companyCard = document.createElement("div");
+            companyCard.classList.add("company-card");
+
+            companyCard.innerHTML = `
+                <div class="company-info">
+                    <img src="../../uploads/${company.profile_photo}" alt="${company.name} Logo" class="company-logo">
+                    <div class="company-details">
+                        <h3>${company.name}</h3>
+                        <p>${company.type}</p>
+                    </div>
+                </div>
+                <div class="company-actions">
+                    <button class="view-info-button" data-id="${docSnap.id}">View Info</button>
+                    <button class="apply-button" data-id="${docSnap.id}" data-email="${company.email}">Apply</button>
+                </div>
+            `;
+
+            companiesList.appendChild(companyCard);
+
+            if (company.lat && company.lng) {
+                const greenIcon = L.icon({
+                    iconUrl: `../../uploads/${company.profile_photo}`,
+                    iconSize: [60, 60],
+                    iconAnchor: [20, 40],
+                    popupAnchor: [0, -40],
+                    className: 'company-marker-icon'
+                });
+
+                const marker = L.marker([company.lat, company.lng], { icon: greenIcon });
+                marker.bindPopup(`<b>${company.name}</b>`);
+                marker.companyName = company.name.toLowerCase();
+
+                markersCluster.addLayer(marker);
+                markers.push(marker);
+            } else {
+                console.warn(`Company "${company.name}" has no lat/lng set.`);
             }
         });
-
-        const ojtCompanyList = document.getElementById('ojt-company-list');
-        if (ojtCompanyList) {
-            if (openForOJTCompanies.length === 0) {
-                ojtCompanyList.innerHTML = '<p>No companies are currently open for OJT.</p>';
-            } else {
-                ojtCompanyList.innerHTML = openForOJTCompanies
-                    .map(
-                        (company) => `
-                        <div class="ojt-company-card">
-                            <img src="../img/company-icon.png" alt="Company Icon" class="ojt-company-icon">
-                            <div class="ojt-company-info">
-                                <h3>${company.companyName}</h3>
-                                <p>Location: ${company.businessLocation.lat}, ${company.businessLocation.lng}</p>
-                            </div>
-                        </div>
-                        `
-                    )
-                    .join('');
-            }
-        } else {
-            console.error("Element with ID 'ojt-company-list' not found in the DOM.");
-        }
     } catch (error) {
-        console.error("Error fetching companies open for OJT:", error);
+        console.error("Error fetching companies:", error);
     }
 }
 
-// Initialize the map and fetch data
-document.addEventListener('DOMContentLoaded', async () => {
-    const companySearchInput = document.getElementById('company-search');
-    const companyResults = document.getElementById('company-results');
-    const companyFinderForm = document.getElementById('company-finder-form'); // Form element
-    const mapContainer = document.getElementById('map');
+// --- Modal Elements ---
+const modal = document.getElementById("company-modal");
+const applyModal = document.getElementById("apply-modal");
 
-    // Initialize the map
-    initializeMap();
+const closeModalBtn = document.getElementById("close-modal");
+const closeApplyModalBtn = document.getElementById("close-apply-modal");
 
-    // Fetch companies from Firestore and display them on the map
-    await fetchCompaniesFromFirestore();
-    await fetchOpenForOJTCompanies();
+const applyForm = document.getElementById("apply-form");
+const resumeInput = document.getElementById("resume-input");
 
-    // Fetch location suggestions from OpenStreetMap Nominatim
-    async function fetchLocationSuggestions(query) {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=PH`;
-        const response = await fetch(url);
-        const data = await response.json();
+let selectedCompanyEmail = "";
 
-        return data.map((location) => ({
-            name: location.display_name,
-            lat: parseFloat(location.lat),
-            lng: parseFloat(location.lon),
-        }));
-    }
+// --- Helper Functions ---
+function openModal(modalElement) {
+    modalElement.style.display = "block";
+}
 
-    // Perform the search and display combined suggestions
-    async function performSearch(query) {
-        if (!query) {
-            companyResults.innerHTML = '<p>Please enter a search query.</p>';
-            companyResults.classList.remove('visible'); // Hide the container if no query
-            return;
-        }
+function closeModalWindow(modalElement) {
+    modalElement.style.display = "none";
+}
 
-        // Filter custom dataset
-        const filteredCompanies = customDataset.filter((company) =>
-            company.companyName.toLowerCase().includes(query.toLowerCase())
-        );
+// --- Show Company Info Modal ---
+function showCompanyDetails(companyId) {
+    const companyRef = doc(db, "companies", companyId);
 
-        // Fetch location suggestions from Nominatim
-        const locationSuggestions = await fetchLocationSuggestions(query);
+    getDoc(companyRef)
+        .then((docSnap) => {
+            if (docSnap.exists()) {
+                const company = docSnap.data();
 
-        // Combine results
-        const combinedResults = [
-            ...filteredCompanies.map((company) => ({
-                type: 'company',
-                name: company.companyName,
-                lat: company.businessLocation.lat,
-                lng: company.businessLocation.lng,
-                address: `${company.businessLocation.lat}, ${company.businessLocation.lng}`,
-            })),
-            ...locationSuggestions.map((location) => ({
-                type: 'location',
-                name: location.name,
-                lat: location.lat,
-                lng: location.lng,
-                address: 'Location',
-            })),
-        ];
+                document.getElementById("company-name").innerText = company.name;
+                document.getElementById("company-type").innerText = company.type;
+                document.getElementById("company-description").innerText = company.description;
+                document.getElementById("company-email").innerText = company.email;
+                document.getElementById("company-location").innerText = `${company.lat}, ${company.lng}`;
+                document.getElementById("company-ojt-status").innerText = company.open_for_ojt ? "Yes" : "No";
 
-        if (combinedResults.length === 0) {
-            companyResults.innerHTML = '<p>No results found.</p>';
-            companyResults.classList.add('visible'); // Show the container even if no results
-        } else {
-            companyResults.innerHTML = combinedResults
-                .map(
-                    (result, index) =>
-                        `<p class="company-result" data-lat="${result.lat}" data-lng="${result.lng}" data-index="${index}">
-                            <strong>${result.name}</strong> - ${result.address}
-                        </p>`
-                )
-                .join('');
-            companyResults.classList.add('visible'); // Show the container with results
+                const profileImage = document.getElementById("company-logo");
+                profileImage.src = `../../uploads/${company.profile_photo}`;
+                profileImage.alt = `${company.name} Logo`;
 
-            // Add click events to the results
-            document.querySelectorAll('.company-result').forEach((result) => {
-                result.addEventListener('click', (e) => {
-                    const lat = parseFloat(result.getAttribute('data-lat'));
-                    const lng = parseFloat(result.getAttribute('data-lng'));
+                const proofDiv = document.getElementById("company-business-proof");
+                proofDiv.innerHTML = company.business_proof
+                    ? `<a href="../../uploads/${company.business_proof}" target="_blank">View Proof of Business</a>`
+                    : `<p>No proof of business available.</p>`;
 
-                    // Move the map to the selected location
-                    map.setView([lat, lng], 15);
-
-                    // Add or move the marker
-                    if (marker) {
-                        marker.setLatLng([lat, lng]);
-                    } else {
-                        marker = L.marker([lat, lng]).addTo(map);
-                    }
-
-                    console.log(`Selected location: Latitude ${lat}, Longitude ${lng}`);
-
-                    // Hide the suggestions after selection
-                    companyResults.classList.remove('visible');
-                });
-            });
-        }
-    }
-
-    // Handle form submission to select the first suggestion or set a default location
-    companyFinderForm.addEventListener('submit', (event) => {
-        event.preventDefault(); // Prevent the form from reloading the page
-
-        const firstResult = document.querySelector('.company-result');
-        if (firstResult) {
-            // Simulate a click on the first suggestion
-            firstResult.click();
-        } else {
-            // If no suggestions, set a default location (e.g., Manila)
-            const defaultLat = 14.5995;
-            const defaultLng = 120.9842;
-
-            map.setView([defaultLat, defaultLng], 15);
-
-            if (marker) {
-                marker.setLatLng([defaultLat, defaultLng]);
+                openModal(modal);
             } else {
-                marker = L.marker([defaultLat, defaultLng]).addTo(map);
+                console.log("No such document!");
             }
+        })
+        .catch((error) => {
+            console.error("Error getting document:", error);
+        });
+}
 
-            console.log(`Default location set: Latitude ${defaultLat}, Longitude ${defaultLng}`);
+// --- Event Listeners ---
+document.addEventListener("click", function (event) {
+    const target = event.target;
+
+    if (target.classList.contains("view-info-button")) {
+        const companyId = target.getAttribute("data-id");
+        showCompanyDetails(companyId);
+    }
+
+    if (target.classList.contains("apply-button")) {
+        selectedCompanyEmail = target.getAttribute("data-email");
+        openModal(applyModal);
+    }
+});
+
+// --- Close Modal Buttons ---
+closeModalBtn.addEventListener("click", () => closeModalWindow(modal));
+closeApplyModalBtn.addEventListener("click", () => closeModalWindow(applyModal));
+
+// --- Close Modal by Clicking Outside ---
+window.addEventListener("click", (event) => {
+    if (event.target === modal) closeModalWindow(modal);
+    if (event.target === applyModal) closeModalWindow(applyModal);
+});
+
+// --- Apply Button inside Company Modal ---
+document.getElementById("apply-button-modal").addEventListener("click", () => {
+    const companyEmail = document.getElementById("company-email").innerText;
+    selectedCompanyEmail = companyEmail;
+    closeModalWindow(modal);
+    openModal(applyModal);
+});
+
+// --- Handle Apply Form Submit ---
+applyForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const file = resumeInput.files[0];
+    if (!file) {
+        alert("Please select a resume to upload.");
+        return;
+    }
+
+    if (!studentData.email) {
+        alert("Student data not loaded yet. Please wait a moment.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('resume', file);
+    formData.append('company_email', selectedCompanyEmail);
+    formData.append('student_email', studentData.email);
+
+    fetch('../../PHP/upload-resume.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(data => {
+        alert(data);
+        closeModalWindow(applyModal);
+        applyForm.reset();
+    })
+    .catch(error => {
+        console.error('Error uploading resume:', error);
+        alert('Failed to upload resume.');
+    });
+});
+
+
+
+// Modify the event listener for "Navigate" button
+// Initialize the map centered in the Philippines
+const map = L.map('map').setView([12.8797, 121.7740], 6);
+
+// Add OpenStreetMap tile
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+// Marker Cluster Group
+const markersCluster = L.markerClusterGroup();
+map.addLayer(markersCluster);
+
+const markers = []; // to store markers with company data
+
+// Debounce function
+function debounce(func, delay) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+const searchInput = document.getElementById('search-input');
+const suggestionsList = document.getElementById('suggestions');
+
+// Handle search
+searchInput.addEventListener('input', debounce(async function(event) {
+    const searchText = event.target.value.trim().toLowerCase();
+
+    // Clear suggestions
+    suggestionsList.innerHTML = '';
+    suggestionsList.style.display = 'none';
+
+    if (searchText.length === 0) return;
+
+    let companyMatches = markers.filter(marker => marker.companyName.includes(searchText));
+
+    if (companyMatches.length > 0) {
+        // Show company suggestions
+        companyMatches.forEach(marker => {
+            const li = document.createElement('li');
+            li.textContent = marker.companyName;
+            li.style.padding = '8px';
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', () => {
+                map.setView(marker.getLatLng(), 15);
+                marker.openPopup();
+                suggestionsList.innerHTML = '';
+                suggestionsList.style.display = 'none';
+                searchInput.value = '';
+            });
+            suggestionsList.appendChild(li);
+        });
+        suggestionsList.style.display = 'block';
+    } else {
+        // No company match, search location
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=ph&q=${encodeURIComponent(searchText)}`;
+
+        try {
+            const response = await fetch(url);
+            const results = await response.json();
+
+            if (results.length > 0) {
+                results.forEach(place => {
+                    const li = document.createElement('li');
+                    li.textContent = place.display_name;
+                    li.style.padding = '8px';
+                    li.style.cursor = 'pointer';
+                    li.addEventListener('click', () => {
+                        map.setView([place.lat, place.lon], 13);
+                        suggestionsList.innerHTML = '';
+                        suggestionsList.style.display = 'none';
+                        searchInput.value = '';
+                    });
+                    suggestionsList.appendChild(li);
+                });
+                suggestionsList.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error searching location:', error);
         }
-    });
+    }
+}, 500)); // 500ms debounce
 
-    // Attach input event listener with debouncing
-    let debounceTimeout;
-    companySearchInput.addEventListener('input', (event) => {
-        const query = event.target.value.trim();
 
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-            performSearch(query);
-        }, 300); // 300ms debounce delay
-    });
+let studentData = {};
+
+async function fetchStudentData() {
+    const auth = getAuth(); // 🔥 use getAuth()
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.error("No user is logged in.");
+        return;
+    }
+
+    const studentRef = doc(getFirestore(), "students", user.uid);
+    const studentSnapshot = await getDoc(studentRef);
+
+    if (studentSnapshot.exists()) {
+        studentData = studentSnapshot.data();
+        document.dispatchEvent(new Event("studentDataReady")); // ✅ Dispatch event when ready
+    } else {
+        console.error("Student profile not found.");
+    }
+}
+
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        await fetchStudentData();
+    } else {
+        console.log("User is not logged in.");
+    }
 });
