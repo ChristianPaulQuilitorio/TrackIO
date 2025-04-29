@@ -12,6 +12,14 @@ const firebaseConfig = {
     measurementId: "G-DSPVFG2CYW"
 };
 
+function showConfirmationPopup() {
+    const popup = document.getElementById("confirmation-popup");
+    popup.style.opacity = "1";
+    setTimeout(() => {
+        popup.style.opacity = "0";
+    }, 2000); // Visible for 2 seconds
+}
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
@@ -20,7 +28,7 @@ const reportContainer = document.getElementById("report-container");
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
-        window.location.href = "/public/Student/student-.html"; // redirect to login
+        window.location.href = "/public/Student/student-login.html"; // corrected the redirect
         return;
     }
 
@@ -32,11 +40,16 @@ onAuthStateChanged(auth, async (user) => {
         const studentData = studentDoc.data();
         const checkInOutData = studentData.checkInOutData || [];
 
+        // Optional: sort by date
+        checkInOutData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
         checkInOutData.forEach(async (entry, index) => {
             const { date, checkInTime, checkOutTime } = entry;
 
-            // Try to get existing report
-            const reportRef = doc(db, "students", uid, "dailyReports", date);
+            // Each reportRef is unique to the entry date
+            const reportId = `${date}_${checkInTime.replaceAll(":", "-")}`;
+            const reportRef = doc(db, "students", uid, "dailyReports", reportId);
+
             const reportDoc = await getDoc(reportRef);
             const existingReport = reportDoc.exists() ? reportDoc.data().report : "";
 
@@ -58,12 +71,12 @@ onAuthStateChanged(auth, async (user) => {
             textarea.className = "report-textarea";
             textarea.placeholder = "Write about what you did, what you learned, any challenges, etc...";
             textarea.value = existingReport;
-            textarea.style.display = "none"; // Hide initially
+            textarea.style.display = "none";
 
             const saveBtn = document.createElement("button");
             saveBtn.className = "save-btn";
             saveBtn.textContent = "💾 Save Report";
-            saveBtn.style.display = "none"; // Hide initially
+            saveBtn.style.display = "none";
 
             let isEditing = false;
 
@@ -74,7 +87,7 @@ onAuthStateChanged(auth, async (user) => {
                 saveBtn.style.display = isEditing ? "inline-block" : "none";
             });
 
-            // Save report
+            // SAVE BUTTON - fix: wrap in closure so it captures correct reportRef
             saveBtn.addEventListener("click", async () => {
                 const reportText = textarea.value.trim();
                 if (reportText.length === 0) {
@@ -89,14 +102,12 @@ onAuthStateChanged(auth, async (user) => {
 
                 alert("Report saved successfully!");
 
-                // Update button and hide textarea/save button
                 addBtn.textContent = "✏️ Edit Report";
                 textarea.style.display = "none";
                 saveBtn.style.display = "none";
                 isEditing = false;
             });
 
-            // Append to DOM
             card.appendChild(title);
             card.appendChild(meta);
             card.appendChild(addBtn);

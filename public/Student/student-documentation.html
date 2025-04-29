@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Daily Reports</title>
+  <title>Daily Diary</title>
   <link rel="stylesheet" href="student-style.css"> <!-- if you have one -->
   <style>
     body {
@@ -36,29 +36,25 @@
   </style>
 </head>
 <body>
-    <div id="countdown-container">
-        <p>Remaining Time: <span id="countdown-display">Loading...</span></p>
-    </div>
+  
 
     <header class="main-header">
         <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
             <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
-                <img src="../img/notification.png" alt="Notification Icon">
             </a>
             <a href="student-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
-            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button> <!-- Logout Button -->
+            
         </nav>
     </header>
 
-    <!-- Notification Pop-Up -->
-    <div class="notification-popup hidden" id="notification-popup"></div>
+ 
     <!-- Navigation Bar -->
     <nav class="navbar">
         <a href="student-dashboard.html" class="nav-item" aria-label="Student Dashboard">
-            <img src="../img/Student-dashboard.jpg" alt="Student Dashboard Icon">
+            <img src="../img/home.png" alt="Student Dashboard Icon">
             <span>Student Dashboard</span>
         </a>
         <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
@@ -83,5 +79,6 @@
   <div id="report-container"></div>
 
   <script type="module" src="student-documentation.js"></script>
+  
 </body>
 </html>
