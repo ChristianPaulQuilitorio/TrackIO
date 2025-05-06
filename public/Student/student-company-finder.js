@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-import { getFirestore, collection, query, where, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+import { getFirestore, collection, query, where, doc, getDoc, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
 const firebaseConfig = {
@@ -28,15 +28,52 @@ onAuthStateChanged(auth, (user) => {
 
 // --- Fetch and Display Companies ---
 async function loadCompanies() {
+
+    // Clear previous markers
+    markers.forEach(marker => markersCluster.removeLayer(marker));
+
     const companiesRef = collection(db, "companies");
     const q = query(companiesRef, where("open_for_ojt", "==", true));
+    
+    document.addEventListener("studentDataReady", () => {
+        loadCompanies();
+    });
+    
 
     try {
         const querySnapshot = await getDocs(q);
         const companiesList = document.getElementById("companies-list");
+        companiesList.innerHTML = ""; // clear previous entries
 
-        querySnapshot.forEach((docSnap) => {
+        let acceptedCompanyCard = null;
+
+        for (const docSnap of querySnapshot.docs) {
             const company = docSnap.data();
+            const companyEmail = company.email;
+            const companyId = docSnap.id;
+
+            // Check if the student has applied
+            let statusHTML = '';
+            let isAccepted = false; // <-- Initialize isAccepted
+            if (studentData?.email) {
+                const applyDocRef = doc(db, "Apply", companyEmail);
+                const uploadsCollection = collection(applyDocRef, "uploads");
+                const q = query(uploadsCollection, where("student_email", "==", studentData.email));
+                const res = await getDocs(q);
+
+                if (!res.empty) {
+                    const applicationStatus = res.docs[0].data().status;
+
+                    if (applicationStatus === "pending") {
+                        statusHTML = `<p class="application-status pending">Status: <strong>Pending</strong></p>`;
+                    } else if (applicationStatus === "accepted") {
+                        statusHTML = `<p class="application-status accepted">✅ <strong>Currently Working Here</strong></p>`;
+                        isAccepted = true;
+                    } else if (applicationStatus === "declined") {
+                        statusHTML = `<p class="application-status declined">Status: <strong>Declined</strong></p>`;
+                    }
+                }
+            }      
 
             const companyCard = document.createElement("div");
             companyCard.classList.add("company-card");
@@ -47,15 +84,20 @@ async function loadCompanies() {
                     <div class="company-details">
                         <h3>${company.name}</h3>
                         <p>${company.type}</p>
+                        ${statusHTML}
                     </div>
                 </div>
                 <div class="company-actions">
-                    <button class="view-info-button" data-id="${docSnap.id}">View Info</button>
-                    <button class="apply-button" data-id="${docSnap.id}" data-email="${company.email}">Apply</button>
+                    <button class="view-info-button" data-id="${companyId}">View Info</button>
+                    ${!isAccepted ? `<button class="apply-button" data-id="${companyId}" data-email="${companyEmail}">Apply</button>` : ""}
                 </div>
             `;
 
-            companiesList.appendChild(companyCard);
+            if (isAccepted) {
+                acceptedCompanyCard = companyCard; // store for prepending later
+            } else {
+                companiesList.appendChild(companyCard);
+            }
 
             if (company.lat && company.lng) {
                 const greenIcon = L.icon({
@@ -75,7 +117,13 @@ async function loadCompanies() {
             } else {
                 console.warn(`Company "${company.name}" has no lat/lng set.`);
             }
-        });
+        }         // If student is working somewhere, show that card on top
+        if (acceptedCompanyCard) {
+            const acceptedHeader = document.createElement("h3");
+            acceptedHeader.innerText = "You are currently working at this company:";
+            companiesList.prepend(acceptedCompanyCard);
+            companiesList.prepend(acceptedHeader);
+        }
     } catch (error) {
         console.error("Error fetching companies:", error);
     }
@@ -194,16 +242,38 @@ applyForm.addEventListener('submit', function (e) {
         method: 'POST',
         body: formData
     })
-    .then(response => response.text())
-    .then(data => {
-        alert(data);
+    
+    .then(response => response.json())
+    .then(async data => {
+    if (data.status === 'success') {
+        alert(data.message);
         closeModalWindow(applyModal);
         applyForm.reset();
-    })
-    .catch(error => {
-        console.error('Error uploading resume:', error);
-        alert('Failed to upload resume.');
-    });
+
+        const applyDocRef = doc(db, "Apply", data.company_email);
+        const uploadsCollection = collection(applyDocRef, "uploads");
+
+        // Check for duplicate before adding
+        const q = query(uploadsCollection, where("student_email", "==", data.student_email));
+        const existing = await getDocs(q);
+
+        if (!existing.empty) {
+            alert("You already applied to this company.");
+            return;
+        }
+
+        await addDoc(uploadsCollection, {
+            student_email: data.student_email,
+            resume_filename: data.resume_filename,
+            status: "pending",
+            uploaded_at: serverTimestamp()
+        });
+
+        alert("Resume info saved in Firestore with pending status.");
+    } else {
+        alert("Upload failed: " + data.message);
+    }
+});
 });
 
 
@@ -297,8 +367,8 @@ searchInput.addEventListener('input', debounce(async function(event) {
 
 let studentData = {};
 
+// Fetch student profile from Firestore
 async function fetchStudentData() {
-    const auth = getAuth(); // 🔥 use getAuth()
     const user = auth.currentUser;
 
     if (!user) {
@@ -311,12 +381,14 @@ async function fetchStudentData() {
 
     if (studentSnapshot.exists()) {
         studentData = studentSnapshot.data();
-        document.dispatchEvent(new Event("studentDataReady")); // ✅ Dispatch event when ready
+        studentData.uid = user.uid;
+        document.dispatchEvent(new Event("studentDataReady")); // ✅ Notify when ready
     } else {
         console.error("Student profile not found.");
     }
 }
 
+// Wait for authentication and load student data
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         await fetchStudentData();
@@ -324,3 +396,6 @@ onAuthStateChanged(auth, async (user) => {
         console.log("User is not logged in.");
     }
 });
+
+
+

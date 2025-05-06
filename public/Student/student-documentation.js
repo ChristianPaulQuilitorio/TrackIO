@@ -47,7 +47,7 @@ onAuthStateChanged(auth, async (user) => {
             const { date, checkInTime, checkOutTime } = entry;
 
             // Each reportRef is unique to the entry date
-            const reportId = `${date}_${checkInTime.replaceAll(":", "-")}`;
+            const reportId = `${date}_${(":", "-")}`;
             const reportRef = doc(db, "students", uid, "dailyReports", reportId);
 
             const reportDoc = await getDoc(reportRef);

@@ -1,0 +1,50 @@
+#ojt-applicants-section {
+    margin-top: 2rem;
+}
+
+.applicants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.applicant-card {
+    background-color: #f4f4f4;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.applicant-card button {
+    margin-right: 10px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.accept-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.decline-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+.status-accepted {
+    color: green;
+    font-weight: bold;
+}
+
+.status-declined {
+    color: red;
+    font-weight: bold;
+}
+
+.status-pending {
+    color: orange;
+    font-weight: bold;
+}

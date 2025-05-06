@@ -9,10 +9,10 @@
     <link rel="stylesheet" href="../student/student-style.css">
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="company-style.css">
+    <link rel="stylesheet" href="company-dashboard.css">
 </head>
 <body>
    
-    
     <!-- Header -->
     <header class="main-header">
         <button class="burger-button" aria-label="Toggle Navigation">☰</button>
@@ -35,7 +35,6 @@
         <h2>Welcome, <span id="user-name">Guest</span></h2>
         <p>Email: <span id="user-email">Not Available</span></p>
     </section>
-
     <!-- Navigation Bar -->
     <nav class="navbar">
         <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
@@ -57,15 +56,22 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="dashboard-content">
-        <h1>Welcome to the Company Dashboard</h1>
-        <p>Use the navigation bar to access different sections of the dashboard.</p>
-    </main>
+<!-- Main Content -->
+<main class="dashboard-content">
+    <section id="ojt-applicants-section">
+        <h2>OJT Applicants</h2>
+        <div id="applicants-container" class="applicants-list">
+            <!-- Applicant cards will be injected here by JS -->
+        </div>
+    </section>
+</main>
+
     
+    <script type="module" src="company-dashboard.js"></script>
     <!-- Firebase Auth Script -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         
         // Firebase config

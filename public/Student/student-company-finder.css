@@ -186,3 +186,74 @@
     justify-content: center;
     align-items: center;
 }
+
+.application-status {
+    font-size: 14px;
+    margin-top: 5px;
+    color: #333;
+}
+
+.application-status.pending strong {
+    color: #f39c12; /* Orange for "Pending" */
+}
+
+.application-status.accepted strong {
+    color: #28a745; /* Green for "Accepted" */
+}
+
+.application-status.declined strong {
+    color: #dc3545; /* Red for "Declined" */
+}
+
+#accepted-company-card {
+    display: flex;
+    align-items: center;
+    background-color: #f9f9f9;
+    border: 2px solid #4CAF50;
+    padding: 16px;
+    border-radius: 12px;
+    margin: 20px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .company-logo {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    margin-right: 20px;
+  }
+  
+  .company-info {
+    flex: 1;
+  }
+  
+  .company-info h2 {
+    margin: 0;
+    font-size: 1.5em;
+    color: #333;
+  }
+  
+  .company-info p {
+    margin: 4px 0;
+    color: #555;
+  }
+  
+  #view-company-details {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin-top: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  #view-company-details:hover {
+    background-color: #45a049;
+  }
+  
+  
+
+
+
