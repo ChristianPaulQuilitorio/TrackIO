@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Evaluation</title>
+  <link rel="stylesheet" href="evaluation-template.css" />
+  <!-- Load html2pdf library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://rawgit.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.js"></script>
+</head>
+<body>
+
+<div class="evaluation-form">
+  <h2>Student Evaluation Form</h2>
+
+  <table class="info-table">
+    <tr>
+      <td><strong>Trainee Name:</strong> <span id="trainee-name"></span></td>
+      <td><strong>Student ID No.:</strong> <span id="student-id"></span></td>
+    </tr>
+    <tr>
+      <td><strong>Course:</strong> <span id="course"></span></td>
+      <td><strong>Job Assignment:</strong> <span id="job-assignment"></span></td>
+    </tr>
+    <tr>
+      <td><strong>Training Hours:</strong> <span id="training-hours"></span></td>
+      <td><strong>Company Name:</strong> <span id="company-name"></span></td>
+    </tr>
+  </table>
+
+  <h3>Evaluation Criteria</h3>
+
+  <div class="add-criteria">
+    <input type="text" id="new-criteria" placeholder="Enter new criteria" />
+    <button onclick="addCriteria(document.getElementById('new-criteria').value)">Add</button>
+  </div>
+
+  <table class="criteria-table">
+    <thead>
+      <tr>
+        <th>Criteria</th>
+        <th>Rating</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="criteria-body">
+      <!-- Rows added dynamically -->
+    </tbody>
+  </table>
+
+  <div class="comments">
+    <strong>Comments:</strong><br><br>
+    <textarea id="evaluation-comment" rows="5" placeholder="Write your comments here..."></textarea>
+  </div>
+
+  <div class="signature-section">
+    <div class="signature-box">
+      <div class="signature-line"></div>
+      <p>Evaluator's Signature</p>
+    </div>
+    <div class="signature-box">
+      <div class="signature-line"></div>
+      <p>Date</p>
+    </div>
+  </div>
+</div>
+
+<div style="text-align: center; margin-top: 2rem;">
+  <button onclick="generatePDF()">Download as PDF</button>
+  <button onclick="saveEvaluation()">Save to Firestore</button>
+</div>
+
+<script src="html2pdf.bundle.min.js"></script>
+<script type="module" src="evaluation-template.js"></script>
+
+</body>
+</html>
