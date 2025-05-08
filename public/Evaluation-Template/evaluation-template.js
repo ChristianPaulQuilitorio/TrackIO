@@ -73,7 +73,7 @@ window.addCriteria = function (name = "", rating = "") {
   const tr = document.createElement("tr");
 
   tr.innerHTML = `
-    <td><input type="text" class="criteria-name" value="${name}" /></td>
+    <td><textarea class="criteria-name" rows="2">${name}</textarea></td>
     <td>
       <select class="criteria-rating" style="display:none;">
         <option value="">Select</option>
@@ -137,91 +137,6 @@ querySnapshot.forEach(async (studentDoc) => { // Renamed 'doc' to 'studentDoc'
 
 alert("Evaluation saved successfully.");
 
-};
-
-// 📤 Export to PDF (same as previous)
-window.generatePDF = function () {
-  const table = document.querySelector(".criteria-table");
-
-  let actionColIndex = -1;
-  const headerCells = table.querySelectorAll("thead tr th");
-  headerCells.forEach((th, index) => {
-    if (th.textContent.trim() === "Action") {
-      actionColIndex = index;
-      th.style.display = "none";
-    }
-  });
-
-  const allRows = table.querySelectorAll("tbody tr");
-  allRows.forEach(row => {
-    const cells = row.querySelectorAll("td");
-    if (actionColIndex >= 0 && cells[actionColIndex]) {
-      cells[actionColIndex].style.display = "none";
-    }
-  });
-
-  const allSelects = table.querySelectorAll("select");
-  allSelects.forEach(select => {
-    select.style.display = 'none';
-  });
-
-  document.querySelector('.add-criteria').style.display = 'none';
-
-  const element = document.querySelector('.evaluation-form');
-
-  // CSS Fix: Ensure that tables and content fit within page width
-  const opt = {
-    margin: [0.5, 0.5, 0.5, 0.5],  // Smaller margins to fit content better
-    filename: 'evaluation-form.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: {
-      scale: 2,
-      logging: true,   // Enable logging for debugging
-      useCORS: true,   // Handle CORS
-      x: 0,
-      y: 0,
-      width: 600,      // Set the width for rendering (adjust this based on your content)
-      height: 800,     // Set the height for rendering
-    },
-    jsPDF: {
-      unit: 'in',
-      format: 'letter',
-      orientation: 'portrait',
-      compress: true,
-      autoPaging: true,  // Enable automatic page breaks
-      margin: [0.5, 0.5, 0.5, 0.5],  // Adjust margins if necessary
-    }
-  };
-
-  // Check the height of the content dynamically before generating the PDF
-  html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
-    const totalPages = pdf.internal.pages.length;
-
-    // If there are more pages than expected (overflow), trigger a page break manually
-    if (totalPages > 1) {
-      pdf.addPage();
-    }
-
-    // Save the PDF after making necessary adjustments
-    pdf.save('evaluation-form.pdf');
-
-    // Restore visibility of elements after PDF generation
-    if (actionColIndex >= 0) {
-      headerCells[actionColIndex].style.display = "";
-      allRows.forEach(row => {
-        const cells = row.querySelectorAll("td");
-        if (cells[actionColIndex]) {
-          cells[actionColIndex].style.display = "";
-        }
-      });
-    }
-
-    allSelects.forEach(select => {
-      select.style.display = '';
-    });
-
-    document.querySelector('.add-criteria').style.display = 'block';
-  });
 };
 
 

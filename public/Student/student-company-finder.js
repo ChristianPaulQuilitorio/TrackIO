@@ -61,19 +61,26 @@ async function loadCompanies() {
                 const q = query(uploadsCollection, where("student_email", "==", studentData.email));
                 const res = await getDocs(q);
 
-                if (!res.empty) {
-                    const applicationStatus = res.docs[0].data().status;
+                console.log("Query Result:", res.empty);  // Check if the query returns anything
+                console.log("Documents Found:", res.docs.map(doc => doc.data()));  // Log the documents to verify their contents
 
-                    if (applicationStatus === "pending") {
-                        statusHTML = `<p class="application-status pending">Status: <strong>Pending</strong></p>`;
-                    } else if (applicationStatus === "accepted") {
-                        statusHTML = `<p class="application-status accepted">✅ <strong>Currently Working Here</strong></p>`;
-                        isAccepted = true;
-                    } else if (applicationStatus === "declined") {
-                        statusHTML = `<p class="application-status declined">Status: <strong>Declined</strong></p>`;
+
+                if (!res.empty) {
+                    for (const doc of res.docs) {
+                        const data = doc.data();
+                        if (data.status === "accepted") {
+                            statusHTML = `<p class="application-status accepted">✅ <strong>Currently Working Here</strong></p>`;
+                            isAccepted = true;
+                            break; // Stop once accepted is found
+                        } else if (data.status === "pending" && !statusHTML) {
+                            statusHTML = `<p class="application-status pending">Status: <strong>Pending</strong></p>`;
+                        } else if (data.status === "declined" && !statusHTML) {
+                            statusHTML = `<p class="application-status declined">Status: <strong>Declined</strong></p>`;
+                        }
                     }
                 }
-            }      
+            }
+                
 
             const companyCard = document.createElement("div");
             companyCard.classList.add("company-card");
@@ -264,10 +271,12 @@ applyForm.addEventListener('submit', function (e) {
 
         await addDoc(uploadsCollection, {
             student_email: data.student_email,
+            company_email: data.company_email, // <-- ✅ Add this line
             resume_filename: data.resume_filename,
             status: "pending",
             uploaded_at: serverTimestamp()
         });
+        
 
         alert("Resume info saved in Firestore with pending status.");
     } else {

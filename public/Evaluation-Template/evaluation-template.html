@@ -31,10 +31,30 @@
 
   <h3>Evaluation Criteria</h3>
 
+<!-- Rating Scale Description -->
+<div class="rating-description">
+  <p><strong>Rating Scale:</strong></p>
+  <div class="rating-columns">
+    <div class="left-column">
+      <div><strong>1</strong> – Poor</div>
+      <div><strong>2</strong> – Fair</div>
+      <div><strong>3</strong> – Good</div>
+    </div>
+    <div class="right-column">
+      <div><strong>4</strong> – Very Good</div>
+      <div><strong>5</strong> – Excellent</div>
+    </div>
+  </div>
+</div>
+
+
+
+  
   <div class="add-criteria">
     <input type="text" id="new-criteria" placeholder="Enter new criteria" />
     <button onclick="addCriteria(document.getElementById('new-criteria').value)">Add</button>
   </div>
+  
 
   <table class="criteria-table">
     <thead>
@@ -50,7 +70,7 @@
   </table>
 
   <div class="comments">
-    <strong>Comments:</strong><br><br>
+    <strong>Remarks:</strong><br><br>
     <textarea id="evaluation-comment" rows="5" placeholder="Write your comments here..."></textarea>
   </div>
 
@@ -67,12 +87,13 @@
 </div>
 
 <div style="text-align: center; margin-top: 2rem;">
-  <button onclick="generatePDF()">Download as PDF</button>
-  <button onclick="saveEvaluation()">Save to Firestore</button>
+  <button onclick="saveEvaluation()">Save</button>
 </div>
 
 <script src="html2pdf.bundle.min.js"></script>
 <script type="module" src="evaluation-template.js"></script>
-
+<script>
+  
+</script>
 </body>
 </html>

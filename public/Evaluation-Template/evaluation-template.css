@@ -42,6 +42,38 @@
     border: 1px solid #eee;
   }
   
+  .rating-description {
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    padding: 1rem 2rem;
+    margin: 1.5rem auto;
+    border-radius: 8px;
+    color: #333;
+    font-size: 0.95rem;
+    max-width: 700px;
+  }
+  
+  .rating-description p {
+    margin: 0 0 0.75rem;
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: center;
+  }
+  
+  .rating-columns {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  
+  .left-column, .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  
+  
   .criteria-table th {
     background-color: #f0f0f0;
     font-weight: bold;
@@ -127,4 +159,17 @@
   button:hover {
     background-color: #34495e;
   }
+  
+  .criteria-table td textarea.criteria-name {
+    width: 100%;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    border: 1px solid #ccc;
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 1rem;
+    resize: vertical;
+  }
+  
   

@@ -253,7 +253,14 @@
     background-color: #45a049;
   }
   
-  
+  .company-card.declined {
+    opacity: 0.6;
+    pointer-events: none; /* optionally disables clicks */
+    background-color: #f8d7da; /* light red background */
+}
 
+.company-card.pending {
+    background-color: #fff3cd; /* light yellow background */
+}
 
 
