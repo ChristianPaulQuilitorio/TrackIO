@@ -70,8 +70,11 @@
             <p><strong>Name:</strong> <span id="trainee-name">Loading...</span></p>
             <p><strong>Course:</strong> <span id="course">Loading...</span></p>
             <p><strong>Training Hours:</strong> <span id="training-hours">Loading...</span></p>
-        <label for="company-name"><strong>Company Name:</strong></label>
-        <input type="text" id="company-name" placeholder="Enter company name" required>
+            <label for="company-search">Search Company:</label>
+            <input type="text" id="company-search" placeholder="Type company name..." />
+            <div id="suggestions" class="suggestions-list"></div>
+            <p>Selected Company: <span id="company-confirmed-name">None</span></p>
+
 
         <label for="job-assignment"><strong>Job Assignment:</strong></label>
         <input type="text" id="job-assignment" placeholder="Enter job assignment" required>
@@ -100,10 +103,7 @@
             <textarea id="evaluation-comment" rows="4" cols="50" readonly></textarea>
         </div>
 
-        <!-- Company Search Section -->
 <div id="company-search-section">
-    <input id="company-search" placeholder="Search company..." />
-    <div id="suggestions" class="suggestions-box"></div>
     <p id="company-confirmed-name"></p>
     <button id="confirm-company-button">Confirm Company</button>
   </div>

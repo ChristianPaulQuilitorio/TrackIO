@@ -6,6 +6,7 @@ import {
     setDoc,
     collection,
     getDocs,
+    updateDoc,
     query,
     where
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
@@ -56,8 +57,7 @@ onAuthStateChanged(auth, async (user) => {
                 const jobAssignmentInput = document.getElementById("job-assignment");
                 const studentIdInput = document.getElementById("student-id");
 
-                if (companyNameInput && jobAssignmentInput && studentIdInput) {
-                    companyNameInput.value = companyName;
+                if (jobAssignmentInput && studentIdInput) {
                     jobAssignmentInput.value = jobAssignment;
                     studentIdInput.value = studentId;
                 } else {
@@ -71,25 +71,35 @@ onAuthStateChanged(auth, async (user) => {
             document.getElementById("trainee-name-display").textContent = traineeName;
 
             const evaluationRef = collection(db, "students", user.uid, "EvaluationTemplate");
-            const evaluationSnap = await getDocs(evaluationRef);
+            const evaluationSnap = await getDocs(evaluationRef); // <-- You forgot this line
 
-            if (!evaluationSnap.empty) {
-                const evaluationData = evaluationSnap.docs[0].data();
-                const criteriaTableBody = document.getElementById("criteria-body");
+if (!evaluationSnap.empty) {
+    const evaluationData = evaluationSnap.docs[0].data();
+    const criteriaTableBody = document.getElementById("criteria-body");
 
-                evaluationData.criteria.forEach((criterion) => {
-                    const row = document.createElement("tr");
-                    row.innerHTML = `
-                        <td>${criterion.name}</td>
-                        <td>${criterion.rating || "N/A"}</td>
-                    `;
-                    criteriaTableBody.appendChild(row);
-                });
+    evaluationData.criteria.forEach((criterion) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${criterion.name}</td>
+            <td>${criterion.rating || "N/A"}</td>
+        `;
+        criteriaTableBody.appendChild(row);
+    });
 
-                document.getElementById("evaluation-comment").textContent = evaluationData.comment || "No comment provided";
-            } else {
-                console.warn("No evaluation data found.");
-            }
+    document.getElementById("evaluation-comment").textContent = evaluationData.comment || "No comment provided";
+
+    const savedCompanyName = evaluationData.selectedCompanyName;
+    const savedCompanyEmail = evaluationData.selectedCompanyEmail;
+
+    if (savedCompanyName && savedCompanyEmail) {
+        selectedCompanyEmail = savedCompanyEmail;
+        document.getElementById("company-search").value = savedCompanyName;
+        document.getElementById("company-confirmed-name").textContent = savedCompanyName;
+    }
+}
+ else {
+    console.warn("No evaluation data found.");
+}
 
             // Live company search
             const companySearchInput = document.getElementById("company-search");
@@ -113,12 +123,22 @@ onAuthStateChanged(auth, async (user) => {
                         suggestion.textContent = company.name;
                         suggestion.classList.add("suggestion-item");
 
-                        suggestion.addEventListener("click", () => {
-                            selectedCompanyEmail = docSnap.id;
-                            document.getElementById("company-confirmed-name").textContent = company.name;
-                            suggestionsContainer.innerHTML = "";
-                            companySearchInput.value = company.name;
-                        });
+suggestion.addEventListener("click", async () => {
+    selectedCompanyEmail = docSnap.id;
+    const selectedCompanyName = company.name;
+
+    document.getElementById("company-confirmed-name").textContent = selectedCompanyName;
+    suggestionsContainer.innerHTML = "";
+    companySearchInput.value = selectedCompanyName;
+
+    // Save selected company to Firestore
+    const evaluationTemplateRef = doc(db, "students", user.uid, "EvaluationTemplate", "evaluationData");
+    await updateDoc(evaluationTemplateRef, {
+        selectedCompanyName: selectedCompanyName,
+        selectedCompanyEmail: selectedCompanyEmail
+    }, { merge: true });
+});
+
 
                         suggestionsContainer.appendChild(suggestion);
                     }
@@ -127,17 +147,17 @@ onAuthStateChanged(auth, async (user) => {
 
             // Save changes locally
             document.getElementById("save-button").addEventListener("click", async () => {
-                const updatedCompanyName = document.getElementById("company-name").value;
+                const updatedCompanyName = document.getElementById("company-search").value;
                 const updatedJobAssignment = document.getElementById("job-assignment").value;
                 const updatedStudentId = document.getElementById("student-id").value;
 
                 const evaluationTemplateRef = doc(db, "students", user.uid, "EvaluationTemplate", "evaluationData");
-                await setDoc(evaluationTemplateRef, {
+                await updateDoc(evaluationTemplateRef, {
                     companyName: updatedCompanyName,
                     jobAssignment: updatedJobAssignment,
                     studentId: updatedStudentId,
                 }, { merge: true });
-
+                console.log("Saved successfully.");
                 alert("Changes saved to evaluation template!");
             });
 
