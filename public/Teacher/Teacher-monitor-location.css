@@ -1,0 +1,127 @@
+/* Basic Layout */
+main {
+  font-family: Arial, sans-serif;
+  margin: 40px 0 0 250px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  width: 100%;
+  max-width: 1200px;
+  overflow: hidden; /* Prevent unnecessary scrolling */
+}
+
+/* Map Styling */
+#map {
+  height: 70vh;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 50px auto;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Search Bar Styling */
+#search-bar {
+  padding: 10px;
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+/* Suggestions Pop-Up Container */
+.suggestions-container {
+  display: none;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  background: #fff;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+  width: 100%;
+  max-width: 600px;
+  position: absolute;
+  top: 520px; /* Adjust depending on search bar position */
+  left: 60%;
+  transform: translateX(-50%);
+  z-index: 10000;
+}
+
+/* Suggestion Item Styling */
+.suggestion-item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  background-color: #f1f1f1;
+}
+
+/* Company Cards Container */
+.company-cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* Center align items */
+  gap: 16px;
+  padding: 20px;
+  max-height: 40vh; /* Limit height of the cards container */
+  overflow-y: auto; /* Allow scrolling if needed */
+  flex-grow: 1; /* Allow it to take available space */
+  margin-top: 20px; /* Added margin to separate the cards from search bar */
+}
+
+/* Company Card Styling */
+.company-card {
+  width: 200px; /* Fixed width for the cards */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fff;
+}
+
+.company-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.company-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.company-card .card-body {
+  padding: 16px;
+}
+
+.company-card .card-title {
+  font-size: 18px;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.company-card button {
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.company-card button:hover {
+  background-color: #0056b3;
+}
+
+.company-card button:active {
+  background-color: #003f7d;
+}

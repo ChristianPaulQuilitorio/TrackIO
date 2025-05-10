@@ -6,162 +6,54 @@
   <title>Teacher Dashboard</title>
   <link rel="stylesheet" href="Teacher-style.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="Teacher-dashboard.css" />
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   
-
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f8fc;
-      color: #0d2c54;
-      font-size: 14px;
-    }
-
-    header.main-header {
-      background-color: #0d2c54;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 20px;
-    }
-
-    .main-header .icon-link img,
-    .main-header .logout-button {
-      height: 30px;
-      cursor: pointer;
-      margin-left: 15px;
-    }
-
-    .logout-button {
-      background-color: #ff4e4e;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-
-    .main-container {
-      max-width: 1100px;
-      margin: 30px auto;
-      background-color: #ffffff;
-      border-radius: 12px;
-      padding: 25px 30px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    .dashboard-container {
-      margin-top: 20px;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 25px;
-      font-size: 22px;
-      color: #0d2c54;
-    }
-
-    .back-icon {
-      height: 30px;
-      width: 30px;
-      cursor: pointer;
-      margin-bottom: 10px;
-      display: none;
-    }
-
-    .container {
-      margin-bottom: 20px;
-      background-color: #ffffff;
-      border: 2px solid #d2e3fc;
-      border-radius: 8px;
-      padding: 15px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      font-size: 14px;
-    }
-
-    .container h2,
-    .container h3,
-    .container h4 {
-      margin: 0;
-      cursor: pointer;
-      padding: 10px;
-      background-color: #0d2c54;
-      color: white;
-      border-radius: 6px;
-      font-size: 15px;
-    }
-
-    .sub-container {
-      margin-left: 20px;
-      display: none;
-    }
-
-    .student-card {
-      display: flex;
-      align-items: center;
-      background-color: #e3f0ff;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 5px;
-      font-size: 13px;
-    }
-
-    .student-card img {
-      height: 40px;
-      width: 40px;
-      border-radius: 50%;
-      margin-right: 10px;
-    }
-
-    .student-profile img {
-  width: 100px;  /* Adjust the size as needed */
-  height: 100px;  /* Adjust the size as needed */
-  border-radius: 50%;  /* Makes the image circular */
-  object-fit: cover;  /* Ensures the image maintains its aspect ratio */
-  border: 2px solid #ddd;  /* Optional: adds a border around the image */
-}
-
-
-    .user-list {
-      background-color: white;
-      padding: 15px;
-      border-radius: 10px;
-      border: 1px solid #b8d3f4;
-      margin-bottom: 25px;
-      font-size: 14px;
-    }
-
-    .user-list h3 {
-      margin-bottom: 10px;
-    }
-
-    .burger-button {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-    }
-  </style>
 </head>
 <body>
 
-  <header class="main-header">
-    <button class="burger-button" aria-label="Toggle Navigation">☰</button>
-    <nav class="right-header-nav">
-      <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
-        <img src="../img/notification.png" alt="Notification Icon" />
-      </a>
-      <a href="#profile" class="icon-link" aria-label="Profile">
-        <img src="../img/profile.png" alt="Profile Icon" />
-      </a>
-      <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button>
+    <!-- Header -->
+    <header class="main-header">
+        <button class="burger-button" aria-label="Toggle Navigation">☰</button>
+        <nav class="right-header-nav">
+            <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
+                <img src="../img/notification.png" alt="Notification Icon">
+            </a>
+            <a href="company-profile.html" class="icon-link" aria-label="Profile">
+                <img src="../img/profile.png" alt="Profile Icon">
+            </a>
+            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button>
+        </nav>
+    </header>
+
+    <!-- Notification Pop-Up -->
+    <div class="notification-popup hidden" id="notification-popup"></div>
+
+    <!-- User Info Section -->
+    <section class="user-info" style="text-align: center; margin-bottom: 40%;">
+        <h2>Welcome, <span id="user-name">Guest</span></h2>
+        <p>Email: <span id="user-email">Not Available</span></p>
+    </section>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="Teacher-dashboard.html" class="nav-item" aria-label="Company Dashboard">
+            <img src="../img/Company-Finder.png" alt="Company Finder Icon">
+            <span>Dashboard</span>
+        </a>
+        <a href="Evaluation-Template/Teacher-evaluation-template.html" class="nav-item" aria-label="Work Details">
+            <img src="../img/Work-Details.png" alt="Work Details Icon">
+            <span>Custom Evaluation</span>
+        </a>
+        <a href="Evaluation-Display.html" class="nav-item" aria-label="Documentation">
+            <img src="../img/Documentation.png" alt="Documentation Icon">
+            <span>Evaluation List</span>
+        </a>
+        <a href="Teacher-monitor-location.html" class="nav-item" aria-label="Documentation">
+            <img src="../img/Documentation.png" alt="Documentation Icon">
+            <span>Monitor Student</span>
+        </a>
     </nav>
-  </header>
 
   <div class="main-container">
     <!-- Back Icon -->
@@ -178,7 +70,8 @@
     <!-- Dashboard Section -->
     <div class="dashboard-container">
       <h1>Student Monitoring Dashboard</h1>
-      <div id="programs-container"></div>
+<div id="programs-container"></div>
+
     </div>
   </div>
 

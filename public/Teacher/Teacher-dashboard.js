@@ -54,7 +54,7 @@ function createStudentCard(student, onClick) {
   card.appendChild(name);
 
   card.addEventListener("click", () => {
-    onClick(student);  // Trigger the function to show student details
+    onClick(student);
   });
 
   return card;
@@ -138,9 +138,8 @@ async function showStudentDetails(student) {
     prev();
   }));
 
-  // Display the student's full profile
   const profileDiv = document.createElement("div");
-  profileDiv.className = "student-profile container"; // Adding 'container' class for styling
+  profileDiv.className = "student-profile container";
 
   const img = document.createElement("img");
   img.src = student.profile_pic
@@ -165,124 +164,99 @@ async function showStudentDetails(student) {
   profileDiv.appendChild(img);
   profileDiv.appendChild(name);
   profileDiv.appendChild(details);
-
   container.appendChild(profileDiv);
 
-  // Fetch and display the student's calendar and location info
   const studentRef = doc(db, "students", student.id);
   const studentDoc = await getDoc(studentRef);
 
   if (studentDoc.exists()) {
     const studentData = studentDoc.data();
 
-    // Display student's calendar events
+    // Calendar
     const calendarDiv = document.createElement("div");
-    calendarDiv.className = "student-calendar container"; // Adding 'container' class for styling
+    calendarDiv.className = "student-calendar container";
     calendarDiv.innerHTML = `<h4>Calendar</h4>`;
 
     if (studentData.checkInOutData && Array.isArray(studentData.checkInOutData)) {
       studentData.checkInOutData.forEach(entry => {
         const eventDiv = document.createElement("div");
-        eventDiv.className = "event-container"; // Adding class for event style
+        eventDiv.className = "event-container";
         eventDiv.innerHTML = `
-          <strong>Date:</strong> ${entry.date}<br>
+          <strong>Date:</strong> ${formatDate(entry.date)}<br>
           <strong>Check-in Time:</strong> ${entry.checkInTime}<br>
           <strong>Check-out Time:</strong> ${entry.checkOutTime}`;
         calendarDiv.appendChild(eventDiv);
       });
     } else {
       const noEventsDiv = document.createElement("div");
-      noEventsDiv.className = "no-events-container"; // Styling for 'no events' section
+      noEventsDiv.className = "no-events-container";
       noEventsDiv.textContent = "No calendar events available.";
       calendarDiv.appendChild(noEventsDiv);
     }
 
     container.appendChild(calendarDiv);
 
-    // Display student's location info
-    const locationDiv = document.createElement("div");
-    locationDiv.className = "student-location container"; // Adding 'container' class for styling
-    locationDiv.innerHTML = `<h4>Location</h4>`;
+// Daily Reports
+const reportsDiv = document.createElement("div");
+reportsDiv.className = "student-reports container";
+reportsDiv.innerHTML = `<h4>Daily Reports</h4>`;
 
-    if (studentData.location && studentData.location.name) {
-      const locationInfo = document.createElement("div");
-      locationInfo.className = "location-info"; // Adding class for location info styling
-      locationInfo.innerHTML = `
-        <strong>Location:</strong> ${studentData.location.name}<br>
-        <strong>Latitude:</strong> ${studentData.location.latitude}<br>
-        <strong>Longitude:</strong> ${studentData.location.longitude}`;
-      locationDiv.appendChild(locationInfo);
-    } else {
-      const noLocationDiv = document.createElement("div");
-      noLocationDiv.className = "no-location-container"; // Styling for 'no location' section
-      noLocationDiv.textContent = "No location information available.";
-      locationDiv.appendChild(noLocationDiv);
-    }
+try {
+  const reportsRef = collection(db, "students", student.id, "dailyReports");
+  const reportsSnapshot = await getDocs(reportsRef);
 
-    container.appendChild(locationDiv);
+  if (!reportsSnapshot.empty) {
+reportsSnapshot.forEach((doc) => {
+  const reportData = doc.data();
+  const reportId = doc.id; // this is your "2025-05-08"
+  const reportDate = formatDateFromDocId(reportId);
+  const submittedAtFormatted = reportData.submittedAt
+    ? formatDate(reportData.submittedAt)
+    : "No submission date available";
 
-    // Display daily reports
-    const reportsDiv = document.createElement("div");
-    reportsDiv.className = "student-reports container"; // Adding 'container' class for styling
-    reportsDiv.innerHTML = `<h4>Daily Reports</h4>`;
-
-    if (studentData.checkInOutData && Array.isArray(studentData.checkInOutData)) {
-      studentData.checkInOutData.forEach(async (entry) => {
-        const { date } = entry;
-        const reportRef = doc(db, "students", student.id, "dailyReports", date);
-        const reportDoc = await getDoc(reportRef);
-
-        const reportDiv = document.createElement("div");
-        const reportDate = reportDoc.exists()
-          ? new Date(reportDoc.data().submittedAt.seconds * 1000).toLocaleString()
-          : "No submission date available";
-
-        if (reportDoc.exists()) {
-          const report = reportDoc.data().report;
-          reportDiv.className = "report-container"; // Adding a class for styling individual reports
-          reportDiv.innerHTML = `
-            <strong>Date:</strong> ${date}<br>
-            <strong>Report:</strong> ${report}<br>
-            <strong>Submitted At:</strong> ${reportDate}`;
-        } else {
-          reportDiv.className = "no-report-container"; // Adding a class for no report scenario
-          reportDiv.innerHTML = `<strong>Date:</strong> ${date}<br><strong>Report:</strong> No report submitted yet.`;
-        }
-
-        reportsDiv.appendChild(reportDiv);
-      });
-
-      container.appendChild(reportsDiv);
-    } else {
-      const noReportsDiv = document.createElement("div");
-      noReportsDiv.className = "no-reports-container"; // Styling for 'no reports' section
-      noReportsDiv.textContent = "No daily reports available.";
-      container.appendChild(noReportsDiv);
-    }
+  const reportDiv = document.createElement("div");
+  reportDiv.className = "report-container";
+  reportDiv.innerHTML = `
+    <strong>Date:</strong> ${reportDate}<br>
+    <strong>Report:</strong> ${reportData.report || "No report"}<br>
+    <strong>Submitted At:</strong> ${submittedAtFormatted}`;
+  reportsDiv.appendChild(reportDiv);
+});
 
   } else {
-    console.log("No such student document!");
+    const noReportsDiv = document.createElement("div");
+    noReportsDiv.className = "no-reports-container";
+    noReportsDiv.textContent = "No daily reports available.";
+    reportsDiv.appendChild(noReportsDiv);
+  }
+
+  container.appendChild(reportsDiv);
+} catch (error) {
+  console.error("Error fetching daily reports:", error);
+}
+
   }
 }
 
-// Real-time listener for student data
+function formatDate(dateInput) {
+  const date = dateInput?.seconds ? new Date(dateInput.seconds * 1000) : new Date(dateInput);
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return date.toLocaleDateString('en-US', options);
+}
+
+function formatDateFromDocId(docId) {
+  // Remove "_-" or any suffix after the date
+  const dateOnly = docId.split("_")[0]; // gets "2025-05-08"
+  const date = new Date(dateOnly);
+  return isNaN(date.getTime()) ? "Invalid Date" : date.toDateString();
+}
+
+
+
+
+// Real-time updates
 onSnapshot(collection(db, "students"), (snapshot) => {
   const students = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
   const groupedData = groupStudents(students);
   showPrograms(groupedData);
 });
-
-async function fetchStudents() {
-  try {
-    const querySnapshot = await getDocs(collection(db, "students"));
-    const students = [];
-    querySnapshot.forEach((doc) => students.push({ ...doc.data(), id: doc.id }));
-
-    const groupedData = groupStudents(students);
-    showPrograms(groupedData);
-  } catch (error) {
-    console.error("Error fetching students:", error);
-  }
-}
-
-fetchStudents();

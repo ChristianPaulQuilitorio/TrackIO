@@ -1,0 +1,159 @@
+/* General Styles for the Page */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    color: #333;
+}
+
+h2 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* Popup Container */
+.popup-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex; /* Ensure it's a flex container for centering */
+    justify-content: center;  /* Center horizontally */
+    align-items: center;  /* Center vertically */
+    z-index: 1000; /* Ensure it's above other content */
+}
+
+/* Popup Content */
+.popup-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 80%;
+    overflow-y: auto;
+    max-height: 80vh;
+    position: relative;
+    margin: auto;
+}
+
+/* Popup Header */
+.popup-content h2 {
+    margin-top: 0;
+}
+
+/* Image in Popup */
+.popup-container img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 15px;
+}
+
+/* Close Button on Popup */
+.popup-container button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #000;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* Button Hover Effect */
+.popup-container button:hover {
+    color: red;
+}
+
+/* Evaluation Cards Styling */
+.evaluation-card {
+    background-color: #fff;
+    padding: 15px;
+    margin: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.evaluation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Evaluation Card Text */
+.evaluation-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.evaluation-card p {
+    margin: 5px 0;
+}
+
+.evaluation-card .view-details-btn {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.evaluation-card .view-details-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Evaluation List */
+.evaluation-list {
+    padding: 20px;
+}
+
+#evaluation-cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+#evaluation-instruction {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.popup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.left-side, .right-side {
+  display: flex;
+  flex-direction: column;
+}
+
+.left-side p, .right-side p {
+  margin: 5px 0;
+}
+
+/* Signature Styling */
+.signature-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.underline {
+  width: 100px;
+  height: 2px;
+  background-color: #000;
+  margin: 10px auto;
+}
+
+.signature-text {
+  font-style: italic;
+  font-size: 14px;
+}

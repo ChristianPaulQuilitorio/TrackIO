@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monitor Student Location</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../student/student-style.css">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="Teacher-monitor-location.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="main-header">
+    <button class="burger-button" aria-label="Toggle Navigation">☰</button>
+    <nav class="right-header-nav">
+      <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
+        <img src="../img/notification.png" alt="Notification Icon">
+      </a>
+      <a href="company-profile.html" class="icon-link" aria-label="Profile">
+        <img src="../img/profile.png" alt="Profile Icon">
+      </a>
+      <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button>
+    </nav>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="Teacher-dashboard.html" class="nav-item" aria-label="Company Dashboard">
+      <img src="../img/Company-Finder.png" alt="Company Finder Icon">
+      <span>Dashboard</span>
+    </a>
+    <a href="Evaluation-Template/Teacher-evaluation-template.html" class="nav-item" aria-label="Work Details">
+      <img src="../img/Work-Details.png" alt="Work Details Icon">
+      <span>Custom Evaluation</span>
+    </a>
+    <a href="Evaluation-Display.html" class="nav-item" aria-label="Documentation">
+      <img src="../img/Documentation.png" alt="Documentation Icon">
+      <span>Evaluation List</span>
+    </a>
+    <a href="Teacher-monitor-location.html" class="nav-item active" aria-label="Monitor Student">
+      <img src="../img/Documentation.png" alt="Monitor Student Icon">
+      <span>Monitor Student</span>
+    </a>
+  </nav>
+  <main>
+  <!-- User Info Section -->
+  <section class="user-info" style="text-align: center; margin-bottom: 20px;">
+    <h2>Welcome, <span id="user-name">Guest</span></h2>
+    <p>Email: <span id="user-email">Not Available</span></p>
+  </section>
+
+  <!-- Leaflet Map Container -->
+  <div id="map" style="height: 500px; width: 90%; margin: 0 auto 50px auto; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
+
+  <!-- Search bar -->
+ <input id="search-bar" type="text" placeholder="Search..." />
+<div class="suggestions-container" id="suggestions"></div>
+  <h2>Company List</h2>
+  <!-- Company Cards Container -->
+  <div id="company-cards" class="company-cards-container"></div>
+  </main>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Your Monitoring Logic -->
+  <script type="module" src="Teacher-monitor-location.js"></script>
+</body>
+</html>
