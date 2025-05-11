@@ -148,6 +148,7 @@ let checkInTime = null;
 let checkOutTime = null;
 let isCheckedIn = false;
 let countdownInterval = null;
+let companyGeofences = [];
 
 const checkInButton = document.getElementById('check-in-button');
 const checkOutButton = document.getElementById("check-out-btn");
@@ -611,7 +612,7 @@ async function fetchLocationName(latitude, longitude) {
 }
 
 // Function to initialize or update the map
-function initializeMap(latitude, longitude, firstName, lastName, locationName) {
+function initializeMap(latitude, longitude, firstName, lastName, locationName, profilePicPath) {
     if (!map) {
         // Initialize the map if it doesn't exist
         map = L.map('map').setView([latitude, longitude], 13); // Set initial view with zoom level 13
@@ -625,22 +626,118 @@ function initializeMap(latitude, longitude, firstName, lastName, locationName) {
         map.removeLayer(marker);
     }
 
-    // Define a custom icon for the marker
-    const customIcon = L.icon({
-        iconUrl: '../img/sample-profile.jpg', // Path to the custom marker image
-        iconSize: [40, 40], // Size of the icon [width, height]
-        iconAnchor: [20, 40], // Anchor point of the icon [x, y]
-        popupAnchor: [0, -40], // Position of the popup relative to the icon [x, y]
-    });
+    // Adjust path to point outside the current folder
+const resolvedProfilePicPath = profilePicPath 
+    ? `../../${profilePicPath}` : '../img/sample-profile.jpg';
 
-    // Add a new marker at the updated location with the custom icon
-    marker = L.marker([latitude, longitude], { icon: customIcon }).addTo(map);
-    marker.bindPopup(`
-        <strong>${firstName} ${lastName}</strong><br>
-        Location: ${locationName}<br>
-        Latitude: ${latitude}, Longitude: ${longitude}
-    `).openPopup();
+
+
+const customIcon = L.divIcon({
+    className: 'custom-marker-icon',
+    html: `<div class="marker-image-container">
+               <img src="${resolvedProfilePicPath}" alt="Profile" />
+           </div>`,
+    iconSize: [50, 50],
+    iconAnchor: [25, 50],
+    popupAnchor: [0, -50]
+});
+
+
+// Check geofence status first
+const studentLatLng = L.latLng(latitude, longitude);
+let studentStatus = '';
+
+if (isStudentInsideAnyGeofence(studentLatLng)) {
+    studentStatus = 'Working';
+} else {
+    studentStatus = 'Not Working';
 }
+
+// Add a new marker at the updated location with the custom icon
+marker = L.marker([latitude, longitude], { icon: customIcon }).addTo(map);
+marker.bindPopup(`
+    <div style="text-align: center;">
+        <img src="${resolvedProfilePicPath}" 
+             alt="Profile Picture" 
+             style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 8px;">
+        <div><strong>${firstName} ${lastName}</strong></div>
+        <div>Status: ${studentStatus}</div>
+        <div>Location: ${locationName}</div>
+        <div>Latitude: ${latitude}, Longitude: ${longitude}</div>
+    </div>    
+`).openPopup();
+
+function isStudentInsideAnyGeofence(studentLatLng) {
+    return companyGeofences.some(({ circle }) => {
+        const center = circle.getLatLng();
+        const radius = circle.getRadius();
+        const distance = studentLatLng.distanceTo(center);
+        console.log(`Distance from student to company center: ${distance} meters (Radius: ${radius} meters)`);
+        return distance <= radius;
+    });
+}
+
+console.log("Company geofences:", companyGeofences);
+
+async function displayCompanyLocationsOnMap() {
+    try {
+        const companiesSnapshot = await getDocs(collection(db, "companies"));
+
+        companiesSnapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const { lat, lng, companyName, profile_photo } = data;
+
+            if (!lat || !lng) return;
+
+            // Draw the marker
+            const companyIcon = L.divIcon({
+                className: 'company-marker-icon',
+                html: `
+                    <div class="marker-image-container">
+                        <img src="../${profile_photo || 'img/sample-profile.jpg'}" alt="Company" />
+                    </div>`,
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            });
+
+            const marker = L.marker([lat, lng], { icon: companyIcon }).addTo(map);
+
+            marker.bindPopup(`
+                <div style="text-align: center;">
+                    <img src="../${profile_photo || 'img/sample-profile.jpg'}"
+                         alt="Company Profile"
+                         style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 8px;">
+                    <div><strong>${companyName || 'Unnamed Company'}</strong></div>
+                    <div>Latitude: ${lat}, Longitude: ${lng}</div>
+                </div>
+            `);
+
+            // Draw geofence circle (e.g., 100 meters)
+            const geofenceCircle = L.circle([lat, lng], {
+                radius: 100, // meters
+                color: 'blue',
+                fillColor: '#cce5ff',
+                fillOpacity: 0.3
+            }).addTo(map);
+
+            // Store geofence for later proximity checks
+            companyGeofences.push({
+                companyName,
+                circle: geofenceCircle
+            });
+        });
+
+        console.log("Company locations and geofences added.");
+    } catch (error) {
+        console.error("Error fetching company data:", error);
+    }
+}
+
+    displayCompanyLocationsOnMap();
+
+}
+
 
 // Function to update the user's location on the map and in Firestore
 async function updateLocation(position) {
@@ -695,12 +792,45 @@ async function updateLocation(position) {
         });
         console.log("Location updated in Firestore.");
 
+        // Check if the student is inside any geofence
+        let studentStatus = isStudentInsideAnyGeofence(L.latLng(latitude, longitude)) ? 'Working' : 'Not Working';
+
+        // Update the student's status in Firestore
+        await updateDoc(studentDocRef, {
+            status: studentStatus
+        });
+
         // Initialize or update the map
-        initializeMap(latitude, longitude, studentData.firstName, studentData.lastName, locationName);
+        initializeMap(latitude, longitude, studentData.firstName, studentData.lastName, locationName, studentData.profile_pic);
+
+        // Update status on the map popup as well
+        marker.setPopupContent(`
+            <div style="text-align: center;">
+                <img src="../../${studentData.profile_pic || '../img/sample-profile.jpg'}" 
+                     alt="Profile Picture" 
+                     style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 8px;">
+                <div><strong>${studentData.firstName} ${studentData.lastName}</strong></div>
+                <div>Status: ${studentStatus}</div>
+                <div>Location: ${locationName}</div>
+            </div>
+        `).openPopup();
+
     } catch (error) {
         console.error("Error fetching location name or updating Firestore:", error);
     }
 }
+
+// Function to check if the student is inside any geofence
+function isStudentInsideAnyGeofence(studentLatLng) {
+    return companyGeofences.some(({ circle }) => {
+        const center = circle.getLatLng();
+        const radius = circle.getRadius();
+        const distance = studentLatLng.distanceTo(center);
+        console.log(`Distance from student to company center: ${distance} meters (Radius: ${radius} meters)`);
+        return distance <= radius;
+    });
+}
+
 
 // Function to handle location errors
 function handleLocationError(error) {
@@ -739,7 +869,7 @@ function startRealTimeLocationTracking() {
 
     watchId = navigator.geolocation.watchPosition(updateLocation, handleLocationError, {
         enableHighAccuracy: true, // Request high accuracy for better precision
-        timeout: 10000, // Timeout after 10 seconds
+        timeout: 30000, // Increase timeout to 30 seconds
         maximumAge: 0, // Do not use cached location
     });
 
@@ -770,31 +900,32 @@ toggleViewButton.style.marginTop = '10px';
 toggleViewButton.addEventListener('click', toggleMapView);
 mapContainer.parentElement.appendChild(toggleViewButton);
 
-// Function to toggle between satellite and standard map views
+let currentTileLayer;
+
 function toggleMapView() {
-    if (!map) {
-        console.error("Map is not initialized.");
-        return;
+    if (!map) return;
+
+    if (currentTileLayer) {
+        map.removeLayer(currentTileLayer);
     }
 
     if (isSatelliteView) {
-        // Switch to standard view
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        currentTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
             maxZoom: 19,
-        }).addTo(map);
-        console.log("Switched to standard map view.");
+        });
+        isSatelliteView = false;
     } else {
-        // Switch to satellite view
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+        currentTileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri, Maxar, Earthstar Geographics, and the GIS User Community',
             maxZoom: 23,
-        }).addTo(map);
-        console.log("Switched to satellite map view.");
+        });
+        isSatelliteView = true;
     }
 
-    isSatelliteView = !isSatelliteView; // Toggle the view state
+    currentTileLayer.addTo(map);
 }
+
 });
 
 // Enhanced error handling and logging for fetching user data

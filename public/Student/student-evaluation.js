@@ -32,6 +32,7 @@ const db = getFirestore(app);
 const auth = getAuth();
 
 let selectedCompanyEmail = null;
+let evaluationData = null;
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
@@ -50,7 +51,8 @@ onAuthStateChanged(auth, async (user) => {
             const course = data.program || "N/A";
             const trainingHours = data.remainingHours ?? "N/A";
             const companyName = data.companyName || "N/A";
-            const jobAssignment = data.jobAssignment || "N/A";
+            const jobAssignment = data.jobAssignment || "N/A"
+
 
             document.addEventListener("DOMContentLoaded", function () {
                 const companyNameInput = document.getElementById("company-name");
@@ -73,8 +75,10 @@ onAuthStateChanged(auth, async (user) => {
             const evaluationRef = collection(db, "students", user.uid, "EvaluationTemplate");
             const evaluationSnap = await getDocs(evaluationRef); // <-- You forgot this line
 
+
 if (!evaluationSnap.empty) {
-    const evaluationData = evaluationSnap.docs[0].data();
+    evaluationData = evaluationSnap.docs[0].data();
+
     const criteriaTableBody = document.getElementById("criteria-body");
 
     evaluationData.criteria.forEach((criterion) => {
@@ -96,9 +100,22 @@ if (!evaluationSnap.empty) {
         document.getElementById("company-search").value = savedCompanyName;
         document.getElementById("company-confirmed-name").textContent = savedCompanyName;
     }
+
+    // Refill saved input data
+    document.getElementById("company-search").value = evaluationData.companyName || "";
+    document.getElementById("job-assignment").value = evaluationData.jobAssignment || "";
+    document.getElementById("student-id").value = evaluationData.studentId || "";
 }
- else {
-    console.warn("No evaluation data found.");
+
+// ✅ Now safe to access evaluationData outside the block
+if (evaluationData && evaluationData.signature) {
+    const signatureImage = document.getElementById("signature-image");
+
+    // Correct the path by adjusting for directory depth
+    signatureImage.src = `../../${evaluationData.signature.replace(/^(\.\.\/)+/, '')}`;
+    signatureImage.style.display = "block";
+} else {
+    console.warn("No signature found in evaluation data.");
 }
 
             // Live company search
@@ -145,60 +162,60 @@ suggestion.addEventListener("click", async () => {
                 });
             });
 
-            // Save changes locally
-            document.getElementById("save-button").addEventListener("click", async () => {
-                const updatedCompanyName = document.getElementById("company-search").value;
-                const updatedJobAssignment = document.getElementById("job-assignment").value;
-                const updatedStudentId = document.getElementById("student-id").value;
+ document.getElementById("submit-evaluation-button").addEventListener("click", async () => {
+    if (!selectedCompanyEmail) {
+        alert("Please select a company first.");
+        return;
+    }
 
-                const evaluationTemplateRef = doc(db, "students", user.uid, "EvaluationTemplate", "evaluationData");
-                await updateDoc(evaluationTemplateRef, {
-                    companyName: updatedCompanyName,
-                    jobAssignment: updatedJobAssignment,
-                    studentId: updatedStudentId,
-                }, { merge: true });
-                console.log("Saved successfully.");
-                alert("Changes saved to evaluation template!");
-            });
+    const updatedCompanyName = document.getElementById("company-search").value;
+    const updatedJobAssignment = document.getElementById("job-assignment").value;
+    const updatedStudentId = document.getElementById("student-id").value;
 
-            // Send evaluation to selected company
-            document.getElementById("confirm-company-button").addEventListener("click", async () => {
-                if (!selectedCompanyEmail) {
-                    alert("Please select a company first.");
-                    return;
-                }
+    const evaluationTemplateRef = doc(db, "students", user.uid, "EvaluationTemplate", "evaluationData");
 
-                try {
-                    const evaluationTemplateRef = doc(db, "students", user.uid, "EvaluationTemplate", "evaluationData");
-                    const evaluationSnap = await getDoc(evaluationTemplateRef);
+    try {
+        // Update evaluation with latest inputs
+        await updateDoc(evaluationTemplateRef, {
+            companyName: updatedCompanyName,
+            jobAssignment: updatedJobAssignment,
+            studentId: updatedStudentId,
+            selectedCompanyName: updatedCompanyName,
+            selectedCompanyEmail: selectedCompanyEmail
+        }, { merge: true });
 
-                    if (evaluationSnap.exists()) {
-                        const evaluation = evaluationSnap.data();
+        // Fetch updated evaluation to send
+        const evaluationSnap = await getDoc(evaluationTemplateRef);
 
-                        const evalToSend = {
-                            course: evaluation.course,
-                            trainingHours: evaluation.trainingHours,
-                            traineeName: `${data.lastName}, ${data.firstName} ${data.middleName || ""}`.trim(),
-                            studentId: evaluation.studentId,
-                            companyName: evaluation.companyName,
-                            jobAssignment: evaluation.jobAssignment,
-                            comment: evaluation.comment || "",
-                            criteria: evaluation.criteria || [],
-                            timestamp: new Date()
-                        };
+        if (!evaluationSnap.exists()) {
+            alert("Evaluation template is missing.");
+            return;
+        }
 
-                        const companyEvalRef = doc(db, "companies", selectedCompanyEmail, "evaluations", user.uid);
-                        await setDoc(companyEvalRef, evalToSend);
+        const evaluation = evaluationSnap.data();
 
-                        alert("Evaluation sent to the company successfully!");
-                    } else {
-                        alert("Evaluation template is missing.");
-                    }
-                } catch (err) {
-                    console.error("Error sending evaluation to company:", err);
-                    alert("Failed to send evaluation. Check console.");
-                }
-            });
+        const evalToSend = {
+            course: evaluation.course,
+            trainingHours: evaluation.trainingHours,
+            traineeName: `${data.lastName}, ${data.firstName} ${data.middleName || ""}`.trim(),
+            studentId: evaluation.studentId,
+            companyName: evaluation.companyName,
+            jobAssignment: evaluation.jobAssignment,
+            comment: evaluation.comment || "",
+            criteria: evaluation.criteria || [],
+            timestamp: new Date()
+        };
+
+        const companyEvalRef = doc(db, "companies", selectedCompanyEmail, "evaluations", user.uid);
+        await setDoc(companyEvalRef, evalToSend);
+
+        alert("Evaluation saved and sent to the company successfully!");
+    } catch (error) {
+        console.error("Error during evaluation submission:", error);
+        alert("Submission failed. Check console for details.");
+    }
+});
+
 
         } else {
             console.warn("Student profile not found.");

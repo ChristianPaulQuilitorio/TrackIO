@@ -58,29 +58,28 @@
       
     </nav>
 
-    <!-- Evaluation Section -->
-    <div class="evaluation-section" style="padding: 20px;">
+   <!-- Evaluation Section -->
+    <section class="evaluation-section">
         <h3>Student Evaluation</h3>
-
         <!-- Display User Info (Not Editable) -->
-        <div class="user-info" style="margin-top: 10px;">
+        <div class="evaluation-info">
             <h2>Welcome, <span id="trainee-name-display">Loading...</span></h2>
             <p><strong>Name:</strong> <span id="trainee-name">Loading...</span></p>
             <p><strong>Course:</strong> <span id="course">Loading...</span></p>
             <p><strong>Training Hours:</strong> <span id="training-hours">Loading...</span></p>
+
             <label for="company-search">Search Company:</label>
             <input type="text" id="company-search" placeholder="Type company name..." />
             <div id="suggestions" class="suggestions-list"></div>
             <p>Selected Company: <span id="company-confirmed-name">None</span></p>
 
+            <label for="job-assignment"><strong>Job Assignment:</strong></label>
+            <input type="text" id="job-assignment" placeholder="Enter job assignment" required>
 
-        <label for="job-assignment"><strong>Job Assignment:</strong></label>
-        <input type="text" id="job-assignment" placeholder="Enter job assignment" required>
-
-        <label for="student-id"><strong>Student ID:</strong></label>
-        <input type="text" id="student-id" placeholder="Enter student ID" required>
+            <label for="student-id"><strong>Student ID:</strong></label>
+            <input type="text" id="student-id" placeholder="Enter student ID" required>
         </div>
-        
+
         <!-- Evaluation Criteria (Read-Only) -->
         <h4>Evaluation Criteria</h4>
         <table>
@@ -101,22 +100,19 @@
             <textarea id="evaluation-comment" rows="4" cols="50" readonly></textarea>
         </div>
 
-<div id="company-search-section">
-    <p id="company-confirmed-name"></p>
-    <button id="confirm-company-button">Confirm Company</button>
-  </div>
-  <!-- (Other parts of your evaluation form go here) -->
-  
-
-        <!-- Save and Send Buttons -->
-        <div style="margin-top: 20px;">
-            <button id="save-button">Save Changes</button>
-            <button id="send-to-company-button">Send to Company</button>
+        <div id="signature-container">
+            <img id="signature-image" src="" alt="Signature">
+            <div class="signature-line"></div>
+            <p>Evaluator's Signature</p>
         </div>
-    </div>
+
+        <div id="company-search-section">
+            <button id="submit-evaluation-button">Save Evaluation</button>
+        </div>
+    </section>
 
     <script type="module" src="student-evaluation.js"></script>
-    <script type="module" src="student-script.js"></script> <!-- Link to external JavaScript -->
+    <script type="module" src="navbar.js"></script> <!-- Link to external JavaScript -->
 </body>
 
 </html>

@@ -1,21 +1,89 @@
+.evaluation-section {
+    background-color: white;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.evaluation-info {
+    margin-top: 10px;
+}
+
+.evaluation-info input,
+.evaluation-info textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button#submit-evaluation-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    transition: background-color 0.3s ease;
+}
+
+button#submit-evaluation-button:hover {
+    background-color: #45a049;
+}
+
+.signature-line {
+    border-bottom: 1px solid #000;
+    width: 220px;
+    margin: 10px auto 5px;
+}
+
+#signature-image {
+    max-width: 200px;
+    display: block;
+    margin: 0 auto;
+}
+
+#company-search-section {
+    text-align: center;
+    margin-top: 30px;
+}
+
 .suggestions-list {
-    border: 1px solid #ddd;
-    list-style-type: none;
-    padding: 0;
     max-height: 150px;
     overflow-y: auto;
+    border: 1px solid #ddd;
     background-color: #fff;
-    position: absolute;
-    width: 100%;
-    z-index: 1000;
-  }
-  
-  .suggestions-list li {
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.suggestion-item {
     padding: 10px;
     cursor: pointer;
-  }
-  
-  .suggestions-list li:hover {
+    transition: background-color 0.3s ease;
+}
+
+.suggestion-item:hover {
     background-color: #f0f0f0;
-  }
-  
+}
+
+/* Evaluation Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: #f4f7fc;
+    font-weight: bold;
+}
