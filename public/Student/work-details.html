@@ -9,14 +9,17 @@
 </head>
 
 <body>
-    <header class="main-header">
+   <header class="main-header">
         <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
+            <a href="#notifications"  aria-label="Notifications" id="notification-icon">
+            </a>
             <a href="student-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
         </nav>
     </header>
+
 
     <div class="user-info" style="text-align: center; margin-top: 10px;">
         <h2>Work Details</h2>
@@ -26,7 +29,7 @@
     <!-- Navigation Bar -->
     <nav class="navbar">
         <a href="student-dashboard.html" class="nav-item" aria-label="Student Dashboard">
-            <img src="../img/Student-dashboard.jpg" alt="Student Dashboard Icon">
+            <img src="../img/home.png" alt="Student Dashboard Icon">
             <span>Student Dashboard</span>
         </a>
         <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
@@ -37,14 +40,15 @@
             <img src="../img/Work-Details.png" alt="Work Details Icon">
             <span>Work Details</span>
         </a>
-        <a href="#documentation" class="nav-item" aria-label="Documentation">
+        <a href="student-evaluation.html" class="nav-item" aria-label="evaluation">
+            <img src="../img/Work-Details.png" alt="Work Details Icon">
+            <span>Evaluation</span>
+        </a>
+        <a href="student-documentation.html" class="nav-item" aria-label="Documentation">
             <img src="../img/Documentation.png" alt="Documentation Icon">
-            <span>Documentation</span>
+            <span>Daily Diary</span>
         </a>
-        <a href="#about" class="nav-item" aria-label="About">
-            <img src="../img/about.png" alt="About Icon">
-            <span>About</span>
-        </a>
+      
     </nav>
 
     <!-- Check-In Container -->
@@ -116,7 +120,7 @@
             });
         });
     </script>
-    
+    <script type="module" src="student-script.js"></script> <!-- Link to external JavaScript -->
 </body>
 
 </html>

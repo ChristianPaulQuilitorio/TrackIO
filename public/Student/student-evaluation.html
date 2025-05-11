@@ -15,16 +15,17 @@
 
 <body>
 
-    <header class="main-header">
+   <header class="main-header">
         <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
-            <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon"></a>
+            <a href="#notifications"  aria-label="Notifications" id="notification-icon">
+            </a>
             <a href="student-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
-            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button> <!-- Logout Button -->
         </nav>
     </header>
+
 
     <!-- User Info Section -->
     <div class="user-info" style="text-align: center; margin-top: 10px;">
@@ -54,10 +55,7 @@
             <img src="../img/Documentation.png" alt="Documentation Icon">
             <span>Daily Diary</span>
         </a>
-        <a href="#about" class="nav-item" aria-label="About">
-            <img src="../img/about.png" alt="About Icon">
-            <span>About</span>
-        </a>
+      
     </nav>
 
     <!-- Evaluation Section -->
@@ -118,6 +116,7 @@
     </div>
 
     <script type="module" src="student-evaluation.js"></script>
+    <script type="module" src="student-script.js"></script> <!-- Link to external JavaScript -->
 </body>
 
 </html>

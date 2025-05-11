@@ -70,7 +70,7 @@ if (logoutButton) {
         try {
             await auth.signOut();
             console.log("User logged out successfully.");
-            window.location.href = 'Teacher.html';
+            window.location.href = 'Teacher-login.html';
         } catch (error) {
             console.error("Error during logout:", error);
         }
@@ -93,7 +93,7 @@ onAuthStateChanged(auth, async (Teacher) => {
         }
     } else {
         console.error("No authenticated user found.");
-        window.location.href = "./index.html";
+        window.location.href = "./Teacher-login.html";
     }
 });
 

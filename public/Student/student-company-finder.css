@@ -264,3 +264,79 @@
 }
 
 
+@media (max-width: 320px) {
+    #companies-list {
+        margin-left: 0;
+        margin-top: 20px;
+        padding: 10px;
+        justify-content: center;
+    }
+
+    .company-card {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .company-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .company-logo {
+        width: 50px;
+        height: 50px;
+    }
+
+    .company-details h3 {
+        font-size: 1rem;
+    }
+
+    .company-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #map {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .modal-content {
+        width: 90%;
+        padding: 15px;
+    }
+
+    #accepted-company-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .company-logo {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    #view-company-details {
+        width: 100%;
+        text-align: center;
+    }
+}
+@media (max-width: 768px) {
+    #companies-list,
+    #map {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 10px;
+    }
+
+    .company-card {
+        width: 100% !important;
+        margin: 0 auto;
+    }
+
+    body {
+        align-items: flex-start;
+        height: auto;
+    }
+}

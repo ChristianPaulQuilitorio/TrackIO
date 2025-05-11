@@ -2,6 +2,8 @@
 body {
     margin: 0;
     font-family: Arial, sans-serif;
+    padding-left: 200px; /* matches navbar width */
+    padding-top: 80px;    /* adjust for fixed header height */
 }
 
 /* Main header styling */
@@ -179,6 +181,18 @@ body {
     width: 100%;
     height: 1px;
     background-color: rgba(255, 255, 255, 0.3); /* Light line between items */
+}
+
+.logout-button {
+    background-color: #dc3545; /* Bootstrap danger color */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-top: auto; /* Push it to the bottom */
+    transition: background-color 0.3s ease;
 }
 
 /* Burger button styling */
@@ -406,7 +420,7 @@ body {
 /* Responsive Calendar Styling */
 @media (max-width: 768px) {
     #calendar-container {
-        max-width: 100%;
+        min-width: 100%;
         padding: 10px;
     }
 
@@ -436,5 +450,79 @@ body {
 
     .navbar {
         width: 180px; /* Further reduce navbar width for smaller screens */
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-left: 0;
+        padding-top: 60px; /* Reduced header space for mobile */
+    }
+
+    .main-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px 15px;
+        height: auto;
+        top: 0;
+    }
+
+    .right-header-nav {
+        position: static;
+        margin-top: 10px;
+        gap: 10px;
+        justify-content: flex-end;
+        width: 100%;
+    }
+
+    .notification-popup {
+        right: 10px;
+        width: 90%;
+    }
+
+    .check-in-container,
+    .geolocation-container,
+    #calendar-container {
+        width: 90%;
+        margin: 20px auto;
+    }
+
+    .check-in-container input {
+        width: 100%;
+    }
+
+    .content-container {
+        margin-left: 0;
+        margin-top: 100px;
+        padding: 0 10px;
+    }
+
+    .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 180px;
+        padding: 40px 15px;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .navbar.visible {
+        transform: translateX(0);
+    }
+
+    .burger-button {
+        display: block;
+        z-index: 1200;
+    }
+
+    .fc-toolbar-title {
+        font-size: 16px;
+    }
+
+    .fc-button {
+        font-size: 12px;
+        padding: 5px 8px;
     }
 }

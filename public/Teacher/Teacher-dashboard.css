@@ -144,6 +144,41 @@
   font-weight: 500;
 }
 
+/* Burger button styling */
+.burger-button {
+    display: none; /* Hide by default */
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    font-size: 24px;
+    padding: 10px 15px;
+    cursor: pointer;
+    z-index: 900; /* Place it behind the navbar */
+    border-radius: 4px;
+}
+
+/* Responsive styling for mobile and tablet */
+@media (max-width: 768px) {
+    .burger-button {
+        display: block; /* Show the burger button */
+    }
+
+    .navbar {
+        transform: translateX(-100%); /* Hide the navbar by default */
+    }
+
+    .navbar.visible {
+        transform: translateX(0); /* Show the navbar when toggled */
+    }
+
+    .navbar {
+        width: 180px; /* Further reduce navbar width for smaller screens */
+    }
+}
+
 
     
 

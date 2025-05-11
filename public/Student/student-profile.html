@@ -9,35 +9,41 @@
 </head>
 <body>
     <header class="main-header">
-        <button class="burger-button" aria-label="Toggle Navigation">
-            ☰
-        </button>
+        <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
-            <a href="#profile" class="icon-link" aria-label="Profile">
+            <a href="#notifications"  aria-label="Notifications" id="notification-icon">
+            </a>
+            <a href="student-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
-            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button> <!-- Logout Button -->
         </nav>
     </header>
 
+
   
+  <!-- Navigation Bar -->
     <nav class="navbar">
+        <a href="student-dashboard.html" class="nav-item" aria-label="Student Dashboard">
+            <img src="../img/home.png" alt="Student Dashboard Icon">
+            <span>Student Dashboard</span>
+        </a>
         <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
             <img src="../img/Company-Finder.png" alt="Company Finder Icon">
             <span>Company Finder</span>
         </a>
-        <a href="#work-details" class="nav-item" aria-label="Work Details">
+        <a href="work-details.html" class="nav-item" aria-label="Work Details">
             <img src="../img/Work-Details.png" alt="Work Details Icon">
             <span>Work Details</span>
         </a>
-        <a href="#Documentation" class="nav-item" aria-label="Documentation">
+        <a href="student-evaluation.html" class="nav-item" aria-label="evaluation">
+            <img src="../img/Work-Details.png" alt="Work Details Icon">
+            <span>Evaluation</span>
+        </a>
+        <a href="student-documentation.html" class="nav-item" aria-label="Documentation">
             <img src="../img/Documentation.png" alt="Documentation Icon">
             <span>Daily Diary</span>
         </a>
-        <a href="#about" class="nav-item" aria-label="About">
-            <img src="../img/about.png" alt="About Icon">
-            <span>About</span>
-        </a>
+      
     </nav>
 
     <div class="profile-container">
@@ -122,10 +128,11 @@
         </p>
 
         <button id="save-profile-button">Save</button>
-        <button id="logout-button">Logout</button>
+       
     </div>
 
     <!-- Link to the student-profile.js script -->
     <script type="module" src="student-profile.js"></script>
+    <script type="module" src="student-script.js"></script> <!-- Link to external JavaScript -->
 </body>
 </html>
