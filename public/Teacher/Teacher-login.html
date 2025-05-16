@@ -5,39 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login and Register</title>
     <link rel="stylesheet" href="styles.css"> <!-- Link to external CSS -->
+    <link rel="stylesheet" href="../styles.css">
     <!-- Firebase Authentication Script -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <script type="module" src="Teacher-Auth.js"></script>
-     <style>
-        .hidden {
-            display: none;
-        }
-        img {
-            width: 25em;
-            height: 25em;
-            margin: 100px;
-            
-        }
-    </style>
+
 </head>
 <body>
-     <img src="../img/logo1.png" alt="Profile Icon">
-    <div class="form-container" id="form-container">
+     <div class="logo">
+        <img src="../img/logo2.png" alt="Profile Icon">
+        </div>    
+        <div class="form-container" id="form-container">
         <!-- Login Form -->
         <div id="login-form-container">
-            <h2>Login</h2>
+            <h2>Faculty Login</h2>
             <form id="loginForm">
                 <input type="email" id="lEmail" placeholder="Email" required />
                 <input type="password" id="lPassword" placeholder="Password" required />
                 <button id="submitLogin">Login</button>
                 <div id="loginMessage" style="display: none;"></div>
             </form>
-            <div class="google-icon">
-              
+
             </div>
-            <div class="toggle-link">
-                <p>Don't have an account? <a href="Teacher-register.html" id="show-register">Register</a></p>
-            </div>
+                      <div class="logo-links">
+        <a href="../Student/student-login.html" aria-label="Student Login">
+            <img src="../img/student-icon.png" alt="Student Logo" class="logo-icon">
+        </a>
+        <a href="../Company/company-index.html" aria-label="Company Login">
+            <img src="../img/company-icon.png" alt="Company Logo" class="logo-icon">
+        </a>
+        <a href="Teacher-login.html" aria-label="Faculty Login">
+            <img src="../img/faculty-icon.png" alt="Faculty Logo" class="logo-icon">
+        </a>
+    </div>
         </div>
     </div>
     <script>

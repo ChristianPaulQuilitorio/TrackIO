@@ -648,9 +648,9 @@ const studentLatLng = L.latLng(latitude, longitude);
 let studentStatus = '';
 
 if (isStudentInsideAnyGeofence(studentLatLng)) {
-    studentStatus = 'Working';
+    studentStatus = '🟢 Working';
 } else {
-    studentStatus = 'Not Working';
+    studentStatus = '🔴 Not Working';
 }
 
 // Add a new marker at the updated location with the custom icon

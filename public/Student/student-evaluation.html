@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Evaluation</title>
     <link rel="stylesheet" href="student-style.css"> <!-- Link to external CSS -->
+    <link rel="stylesheet" href="navbar.css"> <!-- Link to external CSS -->
     <link rel="stylesheet" href="student-evaluation.css"> <!-- Link to external CSS -->
     <!-- Leaflet.js CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,51 +15,43 @@
 </head>
 
 <body>
-
-   <header class="main-header">
-        <button class="burger-button" aria-label="Toggle Navigation">☰</button>
+    <!-- Header Section -->
+    <header class="main-header">
+                <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
-            <a href="#notifications"  aria-label="Notifications" id="notification-icon">
-            </a>
+            <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
+                </a>
             <a href="student-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
+
         </nav>
     </header>
-
-
-    <!-- User Info Section -->
-    <div class="user-info" style="text-align: center; margin-top: 10px;">
-        <h2>Welcome, <span id="user-name">Guest</span></h2>
-        <p>Email: <span id="user-email">Not Available</span></p>
-    </div>
-
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="student-dashboard.html" class="nav-item" aria-label="Student Dashboard">
-            <img src="../img/home.png" alt="Student Dashboard Icon">
-            <span>Student Dashboard</span>
+        <a href="student-dashboard.html" class="nav-item">
+            <img src="../img/home.png" alt="Dashboard Icon">
+            <span>Dashboard</span>
         </a>
-        <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
+        <a href="student-company-finder.html" class="nav-item">
             <img src="../img/Company-Finder.png" alt="Company Finder Icon">
             <span>Company Finder</span>
         </a>
-        <a href="work-details.html" class="nav-item" aria-label="Work Details">
-            <img src="../img/Work-Details.png" alt="Work Details Icon">
-            <span>Work Details</span>
+        <a href="work-details.html" class="nav-item">
+            <img src="../img/add-hours-icon.png" alt="Add Icon">
+            <span>Add Hours</span>
         </a>
-        <a href="student-evaluation.html" class="nav-item" aria-label="Evaluation">
-            <img src="../img/Work-Details.png" alt="Work Details Icon">
+        <a href="student-evaluation.html" class="nav-item">
+            <img src="../img/evaluation-icon.png" alt="Evaluation Icon">
             <span>Evaluation</span>
         </a>
-        <a href="student-documentation.html" class="nav-item" aria-label="Documentation">
+        <a href="student-documentation.html" class="nav-item">
             <img src="../img/Documentation.png" alt="Documentation Icon">
             <span>Daily Diary</span>
         </a>
-      
     </nav>
 
-   <!-- Evaluation Section -->
+    <!-- Evaluation Section -->
     <section class="evaluation-section">
         <h3>Student Evaluation</h3>
         <!-- Display User Info (Not Editable) -->
@@ -67,12 +60,18 @@
             <p><strong>Name:</strong> <span id="trainee-name">Loading...</span></p>
             <p><strong>Course:</strong> <span id="course">Loading...</span></p>
             <p><strong>Training Hours:</strong> <span id="training-hours">Loading...</span></p>
+        </div>
 
+        <!-- Company Search -->
+        <div class="company-search-container">
             <label for="company-search">Search Company:</label>
             <input type="text" id="company-search" placeholder="Type company name..." />
             <div id="suggestions" class="suggestions-list"></div>
             <p>Selected Company: <span id="company-confirmed-name">None</span></p>
+        </div>
 
+        <!-- Job Assignment and Student ID -->
+        <div class="job-assignment-container">
             <label for="job-assignment"><strong>Job Assignment:</strong></label>
             <input type="text" id="job-assignment" placeholder="Enter job assignment" required>
 
@@ -95,17 +94,12 @@
         </table>
 
         <!-- Evaluation Comment (Read-Only) -->
-        <div>
+        <div class="evaluation-comment-container">
             <label for="evaluation-comment">Evaluation Comment:</label>
             <textarea id="evaluation-comment" rows="4" cols="50" readonly></textarea>
         </div>
 
-        <div id="signature-container">
-            <img id="signature-image" src="" alt="Signature">
-            <div class="signature-line"></div>
-            <p>Evaluator's Signature</p>
-        </div>
-
+        <!-- Submit Button -->
         <div id="company-search-section">
             <button id="submit-evaluation-button">Save Evaluation</button>
         </div>

@@ -1,55 +1,137 @@
-/* General body styling */
+/* General Styling */
 body {
+    font-family: 'Roboto', Arial, sans-serif;
     margin: 0;
-    font-family: Arial, sans-serif;
-    padding-left: 200px; /* matches navbar width */
-    padding-top: 80px;    /* adjust for fixed header height */
+    padding: 0;
+    background: linear-gradient(to bottom, #ffffff, #e3f2fd);
+    color: #333;
 }
 
-/* Main header styling */
-.main-header {
-    display: flex;
-    justify-content: space-between; /* Space between left and right sections */
-    align-items: center;
-    background-color: transparent; /* Remove background color */
-    padding: 20px 20px;
-    position: fixed;
-    top: 10px;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    height: 20px;
+/* Welcome Section */
+.welcome-section {
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Right-side header navigation */
-.right-header-nav {
-    display: flex;
-    align-items: center;
-    gap: 20px; /* Space between notification and profile icons */
-    position: absolute;
-    top: 30px;
-    right: 40px; /* Align to the right side of the page */
+/* Main Content */
+.main-content {
+    margin-left: 240px;
+    padding: 20px;
 }
 
-.icon-link {
+/* Check-In/Out Section Styling */
+.check-in-container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+    max-width: 400px;
+    text-align: center;
+}
+
+.check-in-container h2 {
+    margin-bottom: 20px;
+    color: #007BFF;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.remaining-hours {
+    margin-bottom: 20px;
+    font-size: 16px;
+    color: #333;
+}
+
+.time-inputs {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 20px;
+    margin-bottom: 20px;
+}
+
+.time-inputs input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: center;
+    background-color: #f9f9f9;
+}
+
+.check-buttons {
+    display: flex;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border: 2px solid white; /* Border-only style */
-    border-radius: 50%; /* Circular icons */
-    text-decoration: none;
-    transition: all 0.3s ease;
+    gap: 10px;
 }
 
-.icon-link img {
-    width: 30px;
-    height: 30px;
+.check-buttons button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
 }
 
-.icon-link:hover {
-    border-color: #0056b3; /* Change border color on hover */
+.check-buttons button:hover {
+    background-color: #0056b3;
+}
+
+/* Reset Button Styling */
+#reset-button {
+    background-color: #FF4D4D; /* Red background */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+#reset-button:hover {
+    background-color: #CC0000; /* Darker red on hover */
+}
+
+/* Calendar Section */
+#calendar-container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+/* Geolocation Section */
+.geolocation-container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Buttons */
+button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
 }
 
 /* Notification Pop-Up Styling */
@@ -112,89 +194,6 @@ body {
     color: #666;
 }
 
-/* Navigation bar styling */
-.navbar {
-    position: fixed;
-    top: 0; /* Move closer to the top */
-    left: 0; /* Keep it on the left side */
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    background-color: #007BFF;
-    padding: 60px 20px; /* Adjust padding for spacing */
-    height: calc(100vh - 20px); /* Full height minus top margin */
-    width: 200px; /* Fixed width for the navbar */
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Add a subtle shadow on the right */
-    transition: transform 0.3s ease;
-    z-index: 1000;
-}
-
-.navbar.hidden {
-    transform: translateX(-100%);
-}
-
-.navbar a {
-    color: white;
-    text-decoration: none;
-    font-size: 16px;
-    padding: 15px 10px; /* Adjust padding for better spacing */
-    border-radius: 4px;
-}
-
-.navbar a:hover {
-    background-color: #0056b3;
-}
-
-.nav-item {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    color: white;
-    width: 100%; /* Ensure the item spans the full width of the navbar */
-    padding: 10px 0; /* Add vertical padding for better spacing */
-    position: relative;
-    box-sizing: border-box; /* Include padding in width calculation */
-}
-
-.nav-item img {
-    width: 30px; /* Smaller icon size */
-    height: 30px;
-    margin-right: 15px; /* Add space between the icon and text */
-}
-
-.nav-item span {
-    font-size: 16px; /* Adjust text size */
-    color: white;
-}
-
-.nav-item:hover {
-    background-color: #0056b3; /* Change background color on hover */
-    width: 100%; /* Ensure the hover background covers the full width */
-    border-radius: 4px; /* Optional: Add rounded corners */
-}
-
-.nav-item:not(:last-child)::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background-color: rgba(255, 255, 255, 0.3); /* Light line between items */
-}
-
-.logout-button {
-    background-color: #dc3545; /* Bootstrap danger color */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 4px;
-    margin-top: auto; /* Push it to the bottom */
-    transition: background-color 0.3s ease;
-}
-
 /* Burger button styling */
 .burger-button {
     display: none; /* Hide by default */
@@ -209,168 +208,6 @@ body {
     cursor: pointer;
     z-index: 900; /* Place it behind the navbar */
     border-radius: 4px;
-}
-
-/* Check-In Container Styling */
-.check-in-container {
-    margin: 100px auto; /* Add a larger margin at the top to avoid overlap */
-    padding: 20px;
-    max-width: 500px;
-    text-align: center;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-
-.remaining-hours {
-    margin-bottom: 20px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-}
-
-.check-in-container p {
-    font-size: 16px;
-    color: #333;
-    margin-bottom: 20px;
-}
-
-.check-in-container input {
-    padding: 5px;
-    font-size: 14px;
-    width: 200px;
-    text-align: center;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-}
-
-#check-in-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    color: white;
-    background-color: #007BFF;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 10px; /* Add margin to separate from input field */
-}
-
-#check-in-button:hover {
-    background-color: #0056b3;
-}
-
-#check-out-btn {
-    padding: 10px 20px;
-    font-size: 16px;
-    color: white;
-    background-color: red;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 10px; /* Add margin to separate from check-in button */
-}
-
-#check-out-btn:hover {
-    background-color: darkred;
-}
-
-/* Geolocation Container Styling */
-.geolocation-container {
-    margin: 20px auto;
-    padding: 20px;
-    max-width: 500px;
-    text-align: center;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.geolocation-container h3 {
-    font-size: 18px;
-    color: #333;
-    margin-bottom: 10px;
-}
-
-.geolocation-container p {
-    font-size: 16px;
-    color: #555;
-}
-
-/* Style for the reset button */
-#reset-button {
-    background-color: #f44336; /* Red background */
-    color: white; /* White text */
-    border: none; /* Remove border */
-    padding: 10px 20px; /* Add padding */
-    text-align: center; /* Center text */
-    text-decoration: none; /* Remove underline */
-    display: inline-block; /* Inline-block for layout */
-    font-size: 16px; /* Font size */
-    margin: 10px 0; /* Margin for spacing */
-    cursor: pointer; /* Pointer cursor on hover */
-    border-radius: 5px; /* Rounded corners */
-    transition: background-color 0.3s ease; /* Smooth hover effect */
-}
-
-#reset-button:hover {
-    background-color: #d32f2f; /* Darker red on hover */
-}
-
-/* Calendar Container */
-#calendar-container {
-    margin: 20px auto;
-    max-width: 900px;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin-right: 120px;
-}
-
-/* FullCalendar Header Styling */
-.fc-header-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.fc-toolbar-title {
-    font-size: 20px;
-    font-weight: bold;
-    color: #333;
-}
-
-.fc-button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 5px 10px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.fc-button:hover {
-    background-color: #0056b3;
-}
-
-.fc-button-primary {
-    background-color: #007BFF;
-    border-color: #007BFF;
-}
-
-.fc-button-primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
 }
 
 /* Calendar Day Grid Styling */
@@ -417,48 +254,48 @@ body {
     margin-top: 120px;
 }
 
-/* Responsive Calendar Styling */
+
+/* Responsive Welcome Section */
 @media (max-width: 768px) {
+    .welcome-section {
+        padding: 15px;
+        margin: 10px auto;
+        text-align: center;
+    }
+}
+
+/* Responsive Check-In/Out Section */
+@media (max-width: 768px) {
+    .check-in-container {
+        width: 90%;
+        margin: 20px auto;
+    }
+
+    .check-in-container input {
+        width: 100%;
+    }
+
+    .check-buttons {
+        flex-direction: column; /* Stack buttons vertically */
+        gap: 10px;
+    }
+}
+
+/* Responsive Geolocation and Calendar Sections */
+@media (max-width: 768px) {
+    .geolocation-container,
     #calendar-container {
-        min-width: 100%;
-        padding: 10px;
+        width: 90%;
+        margin: 20px auto;
     }
 
-    .fc-toolbar-title {
-        font-size: 16px;
-    }
-
-    .fc-button {
-        font-size: 12px;
-        padding: 3px 8px;
+    #map {
+        height: 200px; /* Adjust map height for smaller screens */
     }
 }
 
-/* Responsive styling for mobile and tablet */
+/* Responsive Header */
 @media (max-width: 768px) {
-    .burger-button {
-        display: block; /* Show the burger button */
-    }
-
-    .navbar {
-        transform: translateX(-100%); /* Hide the navbar by default */
-    }
-
-    .navbar.visible {
-        transform: translateX(0); /* Show the navbar when toggled */
-    }
-
-    .navbar {
-        width: 180px; /* Further reduce navbar width for smaller screens */
-    }
-}
-
-@media (max-width: 768px) {
-    body {
-        padding-left: 0;
-        padding-top: 60px; /* Reduced header space for mobile */
-    }
-
     .main-header {
         flex-direction: column;
         align-items: flex-start;
@@ -474,47 +311,13 @@ body {
         justify-content: flex-end;
         width: 100%;
     }
+}
 
-    .notification-popup {
-        right: 10px;
-        width: 90%;
-    }
-
-    .check-in-container,
-    .geolocation-container,
+/* Responsive Calendar Styling */
+@media (max-width: 768px) {
     #calendar-container {
-        width: 90%;
-        margin: 20px auto;
-    }
-
-    .check-in-container input {
-        width: 100%;
-    }
-
-    .content-container {
-        margin-left: 0;
-        margin-top: 100px;
-        padding: 0 10px;
-    }
-
-    .navbar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        width: 180px;
-        padding: 40px 15px;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-    }
-
-    .navbar.visible {
-        transform: translateX(0);
-    }
-
-    .burger-button {
-        display: block;
-        z-index: 1200;
+        min-width: 100%;
+        padding: 10px;
     }
 
     .fc-toolbar-title {
@@ -523,7 +326,7 @@ body {
 
     .fc-button {
         font-size: 12px;
-        padding: 5px 8px;
+        padding: 3px 8px;
     }
 }
 

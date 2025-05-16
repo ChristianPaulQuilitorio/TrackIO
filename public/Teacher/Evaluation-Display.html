@@ -6,51 +6,37 @@
     <title>Evaluation List</title>
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="../student/student-style.css">
-    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="navbar.css"> <!-- Link to external CSS -->
     <link rel="stylesheet" href="Evaluation-Display.css">
 </head>
 <body>
-   
+
     <!-- Header -->
-    <header class="main-header">
+   
         <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
-            <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
-                <img src="../img/notification.png" alt="Notification Icon">
-            </a>
-            <a href="company-profile.html" class="icon-link" aria-label="Profile">
-                <img src="../img/profile.png" alt="Profile Icon">
-            </a>
-            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button>
         </nav>
-    </header>
+   
 
     <!-- Notification Pop-Up -->
     <div class="notification-popup hidden" id="notification-popup"></div>
 
-    <!-- User Info Section -->
-    <section class="user-info" style="text-align: center; margin-bottom: 40%;">
-        <h2>Welcome, <span id="user-name">Guest</span></h2>
-        <p>Email: <span id="user-email">Not Available</span></p>
-    </section>
-
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="Teacher-dashboard.html" class="nav-item" aria-label="Company Dashboard">
-            <img src="../img/Company-Finder.png" alt="Company Finder Icon">
+        <a href="Teacher-dashboard.html" class="nav-item" aria-label="Dashboard">
+            <img src="../img/home.png" alt="home Icon">
             <span>Dashboard</span>
         </a>
-        <a href="Evaluation-Template/Teacher-evaluation-template.html" class="nav-item" aria-label="Work Details">
-            <img src="../img/Work-Details.png" alt="Work Details Icon">
+        <a href="Evaluation-Template/Teacher-evaluation-template.html" class="nav-item" aria-label="Evaluate Student">
+            <img src="../img/evaluation-custom.png" alt="Evaluation">
             <span>Custom Evaluation</span>
         </a>
         <a href="Evaluation-Display.html" class="nav-item" aria-label="Documentation">
-            <img src="../img/Documentation.png" alt="Documentation Icon">
+            <img src="../img/evaluation-icon.png" alt="Documentation Icon">
             <span>Evaluation List</span>
         </a>
         <a href="Teacher-monitor-location.html" class="nav-item" aria-label="Documentation">
-            <img src="../img/Documentation.png" alt="Documentation Icon">
+            <img src="../img/monitor-student.png" alt="Documentation Icon">
             <span>Monitor Student</span>
         </a>
     </nav>
@@ -87,5 +73,6 @@
 
 
     <script type="module" src="Evaluation-Display.js"></script>
+    <script type="module" src="navbar.js"></script>
 </body>
 </html>

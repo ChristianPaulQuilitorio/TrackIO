@@ -1,13 +1,30 @@
-/* Basic Layout */
+/* General Styling */
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f9;
+  color: #333;
+}
+
+h2 {
+  text-align: center;
+  font-size: 2rem;
+  color: #007bff;
+  margin: 20px 0;
+}
+
+/* Main Layout */
 main {
   font-family: Arial, sans-serif;
-  margin: 40px 0 0 250px;
-  padding: 0;
+  margin: 40px auto;
+  padding: 0 20px;
+  max-width: 1200px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   height: auto;
   width: 100%;
-  max-width: 1200px;
   overflow: hidden; /* Prevent unnecessary scrolling */
 }
 
@@ -16,20 +33,36 @@ main {
   height: 70vh;
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto 50px auto;
+  margin: 20px auto;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+  z-index: 0;
 }
 
 /* Search Bar Styling */
 #search-bar {
-  padding: 10px;
+  padding: 12px;
   width: 100%;
   max-width: 600px;
   margin: 20px auto;
-  border-radius: 5px;
+  border-radius: 8px;
   border: 1px solid #ccc;
   font-size: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+#search-bar:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+}
+
+#search-bar-container {
+  position: relative; /* Ensure the search bar and suggestions are positioned together */
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto;
 }
 
 /* Suggestions Pop-Up Container */
@@ -40,20 +73,18 @@ main {
   border: 1px solid #ddd;
   background: #fff;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  margin: 0 auto;
   width: 100%;
   max-width: 600px;
-  position: absolute;
-  top: 520px; /* Adjust depending on search bar position */
-  left: 60%;
-  transform: translateX(-50%);
-  z-index: 10000;
+  position: absolute; /* Position it relative to the search bar */
+  top: 100%; /* Place it directly below the search bar */
+  left: 0;
+  z-index: 1000;
 }
 
-/* Suggestion Item Styling */
 .suggestion-item {
   padding: 10px;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .suggestion-item:hover {
@@ -64,20 +95,19 @@ main {
 .company-cards-container {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center; /* Center align items */
-  gap: 16px;
+  justify-content: center;
+  gap: 20px;
   padding: 20px;
-  max-height: 40vh; /* Limit height of the cards container */
-  overflow-y: auto; /* Allow scrolling if needed */
-  flex-grow: 1; /* Allow it to take available space */
-  margin-top: 20px; /* Added margin to separate the cards from search bar */
+  max-height: 40vh;
+  overflow-y: auto;
+  margin-top: 20px;
 }
 
 /* Company Card Styling */
 .company-card {
-  width: 200px; /* Fixed width for the cards */
+  width: 250px;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -97,6 +127,7 @@ main {
 
 .company-card .card-body {
   padding: 16px;
+  text-align: center;
 }
 
 .company-card .card-title {
@@ -124,4 +155,24 @@ main {
 
 .company-card button:active {
   background-color: #003f7d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  #map {
+    height: 50vh;
+  }
+
+  #search-bar {
+    width: 90%;
+    font-size: 14px;
+  }
+
+  .company-card {
+    width: 90%;
+  }
+
+  .company-cards-container {
+    padding: 10px;
+  }
 }

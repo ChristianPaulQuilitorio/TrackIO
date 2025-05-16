@@ -6,12 +6,41 @@
   <title>Student Evaluation</title>
   
   <link rel="stylesheet" href="Teacher-evaluation-template.css" />
+  <link rel="stylesheet" href="navbar.css" />
   <!-- Load html2pdf library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://rawgit.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.js"></script>
 </head>
 <body>
- 
+
+    <!-- Header -->
+   
+        <button class="burger-button" aria-label="Toggle Navigation">☰</button>
+        <nav class="right-header-nav">
+        </nav>
+   
+
+    <!-- Notification Pop-Up -->
+    <div class="notification-popup hidden" id="notification-popup"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="../Teacher-dashboard.html" class="nav-item" aria-label="Dashboard">
+            <img src="../../img/home.png" alt="home Icon">
+            <span>Dashboard</span>
+        </a>
+        <a href="Teacher-evaluation-template.html" class="nav-item" aria-label="Evaluate Student">
+            <img src="../../img/evaluation-custom.png" alt="Evaluation">
+            <span>Custom Evaluation</span>
+        </a>
+        <a href="../Evaluation-Display.html" class="nav-item" aria-label="Documentation">
+            <img src="../../img/evaluation-icon.png" alt="Documentation Icon">
+            <span>Evaluation List</span>
+        </a>
+        <a href="../Teacher-monitor-location.html" class="nav-item" aria-label="Documentation">
+            <img src="../../img/monitor-student.png" alt="Documentation Icon">
+            <span>Monitor Student</span>
+        </a>
+    </nav>
 
 <div class="evaluation-form">
   <h2>Student Evaluation Form</h2>
@@ -73,15 +102,8 @@
 
   <div class="comments">
     <strong>Remarks:</strong><br><br>
-    <textarea id="evaluation-comment" rows="5" placeholder="Write your comments here..."></textarea>
+    <textarea id="evaluation-comment" rows="5" placeholder="Write your remarks here..."></textarea>
   </div>
-
-  <div class="signature-section">
-    <div class="signature-box">
-      <div class="signature-line"></div>
-      <p>Evaluator's Signature</p>
-    </div>
-    </div>
   </div>
 </div>
 
@@ -89,8 +111,8 @@
   <button onclick="saveEvaluation()">Save</button>
 </div>
 
-<script src="html2pdf.bundle.min.js"></script>
 <script type="module" src="Teacher-evaluation-template.js"></script>
+<script src="navbar.js"></script>
 <script>
   
 </script>

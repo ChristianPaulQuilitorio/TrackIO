@@ -5,54 +5,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Work Details</title>
-    <link rel="stylesheet" href="student-style.css">
+    <link rel="stylesheet" href="work-details.css"> <!-- Link to external CSS -->
+    <link rel="stylesheet" href="navbar.css"> <!-- Link to external CSS -->
 </head>
 
 <body>
-   <header class="main-header">
-        <button class="burger-button" aria-label="Toggle Navigation">☰</button>
+    <!-- Header Section -->
+    <header class="main-header">
+                <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
-            <a href="#notifications"  aria-label="Notifications" id="notification-icon">
-            </a>
+            <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
+                </a>
             <a href="student-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
+
         </nav>
     </header>
-
-
-    <div class="user-info" style="text-align: center; margin-top: 10px;">
-        <h2>Work Details</h2>
-        <p>Update your remaining work hours below.</p>
-    </div>
-
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="student-dashboard.html" class="nav-item" aria-label="Student Dashboard">
-            <img src="../img/home.png" alt="Student Dashboard Icon">
-            <span>Student Dashboard</span>
+        <a href="student-dashboard.html" class="nav-item">
+            <img src="../img/home.png" alt="Dashboard Icon">
+            <span>Dashboard</span>
         </a>
-        <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
+        <a href="student-company-finder.html" class="nav-item">
             <img src="../img/Company-Finder.png" alt="Company Finder Icon">
             <span>Company Finder</span>
         </a>
-        <a href="work-details.html" class="nav-item" aria-label="Work Details">
-            <img src="../img/Work-Details.png" alt="Work Details Icon">
-            <span>Work Details</span>
+        <a href="work-details.html" class="nav-item">
+            <img src="../img/add-hours-icon.png" alt="Add Icon">
+            <span>Add Hours</span>
         </a>
-        <a href="student-evaluation.html" class="nav-item" aria-label="evaluation">
-            <img src="../img/Work-Details.png" alt="Work Details Icon">
+        <a href="student-evaluation.html" class="nav-item">
+            <img src="../img/evaluation-icon.png" alt="Evaluation Icon">
             <span>Evaluation</span>
         </a>
-        <a href="student-documentation.html" class="nav-item" aria-label="Documentation">
+        <a href="student-documentation.html" class="nav-item">
             <img src="../img/Documentation.png" alt="Documentation Icon">
             <span>Daily Diary</span>
         </a>
-      
     </nav>
 
     <!-- Check-In Container -->
     <div class="check-in-container">
+        <h2>Work Details</h2>
         <div class="remaining-hours">
             <label for="remaining-hours-input">Remaining Hours:</label>
             <input type="number" id="remaining-hours-input" value="0" />
@@ -60,66 +56,7 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyC9z8Amm-vlNcbw-XqEnrkt_WpWHaGfwtQ",
-            authDomain: "trackio-f5b07.firebaseapp.com",
-            projectId: "trackio-f5b07",
-            storageBucket: "trackio-f5b07.appspot.com",
-            messagingSenderId: "1083789426923",
-            appId: "1:1083789426923:web:c372749a28e84ff9cd7eae"
-        };
-    
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth();
-    
-        // Block access if not authenticated
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                alert("Access denied. Please log in first.");
-                window.location.href = "student-login.html";
-            }
-        });
-    
-        // Save remaining hours to Firestore
-        async function saveRemainingHoursToFirestore(userId, remainingHours) {
-            try {
-                await setDoc(doc(db, "students", userId), { remainingHours }, { merge: true });
-                alert("Remaining hours saved successfully!");
-                localStorage.setItem("updatedRemainingHours", remainingHours);
-            } catch (error) {
-                console.error("Error saving remaining hours: ", error);
-                alert("Error saving remaining hours. Please try again.");
-            }
-        }
-    
-        function getAuthenticatedUser(callback) {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    callback(user);
-                }
-            });
-        }
-    
-        const saveButton = document.getElementById("save-remaining-hours");
-        saveButton.addEventListener("click", async () => {
-            getAuthenticatedUser(async (user) => {
-                const remainingHours = parseFloat(document.getElementById("remaining-hours-input").value);
-                if (isNaN(remainingHours) || remainingHours < 0) {
-                    alert("Please enter a valid number for remaining hours.");
-                    return;
-                }
-                await saveRemainingHoursToFirestore(user.uid, remainingHours);
-            });
-        });
-    </script>
+    <script type="module" src="work-details.js"></script>
     <script type="module" src="navbar.js"></script> <!-- Link to external JavaScript -->
 </body>
 

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Teacher Dashboard</title>
   <link rel="stylesheet" href="Teacher-style.css" />
+  <link rel="stylesheet" href="navbar.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <link rel="stylesheet" href="Teacher-dashboard.css" />
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
@@ -23,28 +24,22 @@
     <!-- Notification Pop-Up -->
     <div class="notification-popup hidden" id="notification-popup"></div>
 
-    <!-- User Info Section -->
-    <section class="user-info" style="text-align: center; margin-bottom: 40%;">
-        <h2>Welcome, <span id="user-name">Guest</span></h2>
-        <p>Email: <span id="user-email">Not Available</span></p>
-    </section>
-
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="Teacher-dashboard.html" class="nav-item" aria-label="Company Dashboard">
-            <img src="../img/Company-Finder.png" alt="Company Finder Icon">
+        <a href="Teacher-dashboard.html" class="nav-item" aria-label="Dashboard">
+            <img src="../img/home.png" alt="home Icon">
             <span>Dashboard</span>
         </a>
-        <a href="Evaluation-Template/Teacher-evaluation-template.html" class="nav-item" aria-label="Work Details">
-            <img src="../img/Work-Details.png" alt="Work Details Icon">
+        <a href="Evaluation-Template/Teacher-evaluation-template.html" class="nav-item" aria-label="Evaluate Student">
+            <img src="../img/evaluation-custom.png" alt="Evaluation">
             <span>Custom Evaluation</span>
         </a>
         <a href="Evaluation-Display.html" class="nav-item" aria-label="Documentation">
-            <img src="../img/Documentation.png" alt="Documentation Icon">
+            <img src="../img/evaluation-icon.png" alt="Documentation Icon">
             <span>Evaluation List</span>
         </a>
         <a href="Teacher-monitor-location.html" class="nav-item" aria-label="Documentation">
-            <img src="../img/Documentation.png" alt="Documentation Icon">
+            <img src="../img/monitor-student.png" alt="Documentation Icon">
             <span>Monitor Student</span>
         </a>
     </nav>
@@ -53,12 +48,6 @@
     <!-- Back Icon -->
     <div>
       <img src="../img/back-icon.png" alt="Back" id="back-icon" class="back-icon" />
-    </div>
-
-    <!-- User List Section -->
-    <div class="user-list">
-      <h3>Student Locations and Check-In/Out Times</h3>
-      <ul id="user-location-list"></ul>
     </div>
 
     <!-- Dashboard Section -->

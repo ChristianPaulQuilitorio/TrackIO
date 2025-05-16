@@ -139,21 +139,6 @@ async function createEvaluationCard(studentUID, companyUID, data) {
   card.appendChild(commentLabel);
   card.appendChild(commentInput);
 
-  // Signature Pad
-  const canvas = document.createElement("canvas");
-  canvas.width = 300;
-  canvas.height = 150;
-  canvas.style.border = "1px solid #000";
-  card.appendChild(document.createTextNode("Digital Signature:"));
-  card.appendChild(canvas);
-
-  const clearBtn = document.createElement("button");
-  clearBtn.textContent = "Clear";
-  clearBtn.onclick = () => signaturePad.clear();
-  card.appendChild(clearBtn);
-
-  const signaturePad = new SignaturePad(canvas);
-
   // Submit Button
   const submitBtn = document.createElement("button");
   submitBtn.textContent = "Submit Evaluation";
@@ -168,36 +153,12 @@ async function createEvaluationCard(studentUID, companyUID, data) {
       };
     });
 
-    let signatureURL = "";
-    if (!signaturePad.isEmpty()) {
-      const base64 = signaturePad.toDataURL();
-      try {
-        const response = await fetch("../../PHP/upload-signature.php", {
-          method: "POST",
-          body: JSON.stringify({ image: base64 }),
-          headers: { "Content-Type": "application/json" }
-        });
-        const result = await response.json();
-        if (result.success) {
-          signatureURL = result.path;
-        } else {
-          alert("Signature upload failed.");
-          return;
-        }
-      } catch (error) {
-        console.error("Upload error:", error);
-        alert("Error uploading signature.");
-        return;
-      }
-    }
-
     const updatedData = {
       ...data,
       criteria: updatedCriteria,
       comment: commentInput.value,
       timestamp: new Date(),
-      status: "evaluated",
-      signature: signatureURL
+      status: "evaluated"
     };
 
     try {

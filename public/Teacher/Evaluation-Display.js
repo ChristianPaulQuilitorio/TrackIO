@@ -129,12 +129,7 @@ function showPopup(evaluationData) {
         `).join('')}
       </tbody>
     </table>
-    <p><strong>Comment:</strong> ${evaluationData.comment}</p>
-    <div class="signature-container">
-      <img src="../${evaluationData.signature}" alt="Signature" />
-      <div class="underline"></div>
-      <p class="signature-text">Evaluator's Signature</p>
-    </div>
+    <p><strong>Remarks:</strong> <br><br>${evaluationData.comment}</p>
   `;
 
   // Populate the popup with the created content

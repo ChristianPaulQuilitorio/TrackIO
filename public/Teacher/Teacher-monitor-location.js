@@ -212,5 +212,13 @@ function debounceSearch() {
   debounceTimeout = setTimeout(search, 500); // Wait for 500ms after the user stops typing
 }
 
+function autoRefreshMap() {
+    setInterval(async () => {
+        console.log("Refreshing map data...");
+        await loadCompaniesAndStudents(); // Reload companies and students
+    }, 5000); // Refresh every 5 seconds
+}
+
 loadCompaniesAndStudents();
 document.getElementById('search-bar').addEventListener('input', debounceSearch);
+autoRefreshMap();

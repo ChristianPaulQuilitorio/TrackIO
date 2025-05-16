@@ -77,7 +77,34 @@ suggestPopup.style.overflowY = "auto";
 suggestPopup.style.width = "90%";
 searchInput.parentElement.appendChild(suggestPopup);
 
-// Debounce function
+// Fetch suggestions and display them below the search bar
+async function fetchSuggestions(query) {
+  if (!query) {
+    document.getElementById("suggestions").style.display = "none";
+    return;
+  }
+
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}+Philippines`);
+  const data = await res.json();
+
+  const suggestionsContainer = document.getElementById("suggestions");
+  suggestionsContainer.innerHTML = ""; // Clear previous suggestions
+
+  data.forEach((place) => {
+    const suggestionItem = document.createElement("div");
+    suggestionItem.textContent = place.display_name;
+    suggestionItem.onclick = () => {
+      document.getElementById("locationSearch").value = place.display_name;
+      suggestionsContainer.style.display = "none";
+      setMapLocation(place.lat, place.lon, place.display_name);
+    };
+    suggestionsContainer.appendChild(suggestionItem);
+  });
+
+  suggestionsContainer.style.display = data.length ? "block" : "none";
+}
+
+// Debounce function to limit API calls
 function debounce(func, delay) {
   let timer;
   return (...args) => {
@@ -86,36 +113,13 @@ function debounce(func, delay) {
   };
 }
 
-// Suggestion fetch
-async function fetchSuggestions(query) {
-  if (!query) return;
-  const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}+Philippines`);
-  const data = await res.json();
-
-  suggestPopup.innerHTML = "";
-  data.forEach(place => {
-    const item = document.createElement("div");
-    item.style.padding = "5px";
-    item.style.cursor = "pointer";
-    item.innerText = place.display_name;
-    item.onclick = () => {
-      searchInput.value = place.display_name;
-      suggestPopup.style.display = "none";
-      setMapLocation(place.lat, place.lon, place.display_name);
-    };
-    suggestPopup.appendChild(item);
-  });
-
-  suggestPopup.style.display = data.length ? "block" : "none";
-}
-
-searchInput.addEventListener("input", debounce(() => {
-  fetchSuggestions(searchInput.value);
-}, 600));
-
-searchBtn.onclick = async () => {
-  fetchSuggestions(searchInput.value);
-};
+// Attach event listener to the search bar
+document.getElementById("locationSearch").addEventListener(
+  "input",
+  debounce(() => {
+    fetchSuggestions(document.getElementById("locationSearch").value);
+  }, 500)
+);
 
 // Map init
 function initMap() {

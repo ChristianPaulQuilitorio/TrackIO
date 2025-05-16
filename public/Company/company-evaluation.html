@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Dashboard</title>
+    <title>Company Evaluation</title>
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="../student/student-style.css">
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="stylesheet" href="company-style.css">
+    <link rel="stylesheet" href="navbar.css"> <!-- Link to external CSS -->
     <link rel="stylesheet" href="company-evaluation.css">
 </head>
 <body>
@@ -17,38 +15,36 @@
     <header class="main-header">
         <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
+            
             <a href="company-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
-            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button>
+            
         </nav>
     </header>
 
     <!-- Notification Pop-Up -->
     <div class="notification-popup hidden" id="notification-popup"></div>
 
-    <!-- User Info Section -->
-    <section class="user-info" style="text-align: center; margin-bottom: 40%;">
-        <h2>Welcome, <span id="user-name">Guest</span></h2>
-        <p>Email: <span id="user-email">Not Available</span></p>
-    </section>
     <!-- Navigation Bar -->
     <nav class="navbar">
         <a href="company-dashboard.html" class="nav-item" aria-label="Company Dashboard">
-            <img src="../img/Company-Finder.png" alt="Company Finder Icon">
+            <img src="../img/applicant.png" alt="Company Dashboard">
             <span>Applicants</span>
         </a>
-        <a href="../Evaluation-Template/evaluation-template.html" class="nav-item" aria-label="Work Details">
-            <img src="../img/Work-Details.png" alt="Work Details Icon">
-            <span>Evaluation</span>
+
+        <a href="company-evaluation.html" class="nav-item" aria-label="Company Dashboard">
+            <img src="../img/evaluation-icon.png" alt="Company Finder Icon">
+            <span>Evaluate Student</span>
         </a>
+        
+            
     </nav>
     <h1>Company Evaluations</h1>
     <div id="evaluationContainer" class="evaluation-container"></div>
 
     <script type="module" src="company-evaluation.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-
+    <script type="module" src="navbar.js"></script> <!-- Link to external JavaScript -->
 
   </body>
   </html>

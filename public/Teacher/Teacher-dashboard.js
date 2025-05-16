@@ -94,7 +94,7 @@ function showYears(programData, programName) {
   }));
 
   for (const year in programData) {
-    const yearCard = createCard(`${year} Year`, () => {
+    const yearCard = createCard(year, () => { // Use the year directly without appending "Year"
       viewStack.push(() => showYears(programData, programName));
       showBlocks(programData[year], programName, year);
     });
@@ -172,20 +172,21 @@ async function showStudentDetails(student) {
   if (studentDoc.exists()) {
     const studentData = studentDoc.data();
 
-    // Calendar
+    // Calendar Section
     const calendarDiv = document.createElement("div");
     calendarDiv.className = "student-calendar container";
     calendarDiv.innerHTML = `<h4>Calendar</h4>`;
 
     if (studentData.checkInOutData && Array.isArray(studentData.checkInOutData)) {
       studentData.checkInOutData.forEach(entry => {
-        const eventDiv = document.createElement("div");
-        eventDiv.className = "event-container";
-        eventDiv.innerHTML = `
-          <strong>Date:</strong> ${formatDate(entry.date)}<br>
-          <strong>Check-in Time:</strong> ${entry.checkInTime}<br>
-          <strong>Check-out Time:</strong> ${entry.checkOutTime}`;
-        calendarDiv.appendChild(eventDiv);
+        const eventCard = document.createElement("div");
+        eventCard.className = "event-card";
+        eventCard.innerHTML = `
+          <p><strong>Date:</strong> ${formatDate(entry.date)}</p>
+          <p><strong>Check-in Time:</strong> ${entry.checkInTime}</p>
+          <p><strong>Check-out Time:</strong> ${entry.checkOutTime || "Not yet checked out"}</p>
+        `;
+        calendarDiv.appendChild(eventCard);
       });
     } else {
       const noEventsDiv = document.createElement("div");
@@ -196,45 +197,44 @@ async function showStudentDetails(student) {
 
     container.appendChild(calendarDiv);
 
-// Daily Reports
-const reportsDiv = document.createElement("div");
-reportsDiv.className = "student-reports container";
-reportsDiv.innerHTML = `<h4>Daily Reports</h4>`;
+    // Daily Reports Section
+    const reportsDiv = document.createElement("div");
+    reportsDiv.className = "student-reports container";
+    reportsDiv.innerHTML = `<h4>Daily Reports</h4>`;
 
-try {
-  const reportsRef = collection(db, "students", student.id, "dailyReports");
-  const reportsSnapshot = await getDocs(reportsRef);
+    try {
+      const reportsRef = collection(db, "students", student.id, "dailyReports");
+      const reportsSnapshot = await getDocs(reportsRef);
 
-  if (!reportsSnapshot.empty) {
-reportsSnapshot.forEach((doc) => {
-  const reportData = doc.data();
-  const reportId = doc.id; // this is your "2025-05-08"
-  const reportDate = formatDateFromDocId(reportId);
-  const submittedAtFormatted = reportData.submittedAt
-    ? formatDate(reportData.submittedAt)
-    : "No submission date available";
+      if (!reportsSnapshot.empty) {
+        reportsSnapshot.forEach((doc) => {
+          const reportData = doc.data();
+          const reportId = doc.id; // e.g., "2025-05-08"
+          const reportDate = formatDateFromDocId(reportId);
+          const submittedAtFormatted = reportData.submittedAt
+            ? formatDate(reportData.submittedAt)
+            : "No submission date available";
 
-  const reportDiv = document.createElement("div");
-  reportDiv.className = "report-container";
-  reportDiv.innerHTML = `
-    <strong>Date:</strong> ${reportDate}<br>
-    <strong>Report:</strong> ${reportData.report || "No report"}<br>
-    <strong>Submitted At:</strong> ${submittedAtFormatted}`;
-  reportsDiv.appendChild(reportDiv);
-});
+          const reportCard = document.createElement("div");
+          reportCard.className = "report-card";
+          reportCard.innerHTML = `
+            <p><strong>Date:</strong> ${reportDate}</p>
+            <p><strong>Report:</strong> ${reportData.report || "No report submitted"}</p>
+            <p><strong>Submitted At:</strong> ${submittedAtFormatted}</p>
+          `;
+          reportsDiv.appendChild(reportCard);
+        });
+      } else {
+        const noReportsDiv = document.createElement("div");
+        noReportsDiv.className = "no-reports-container";
+        noReportsDiv.textContent = "No daily reports available.";
+        reportsDiv.appendChild(noReportsDiv);
+      }
 
-  } else {
-    const noReportsDiv = document.createElement("div");
-    noReportsDiv.className = "no-reports-container";
-    noReportsDiv.textContent = "No daily reports available.";
-    reportsDiv.appendChild(noReportsDiv);
-  }
-
-  container.appendChild(reportsDiv);
-} catch (error) {
-  console.error("Error fetching daily reports:", error);
-}
-
+      container.appendChild(reportsDiv);
+    } catch (error) {
+      console.error("Error fetching daily reports:", error);
+    }
   }
 }
 
@@ -250,9 +250,6 @@ function formatDateFromDocId(docId) {
   const date = new Date(dateOnly);
   return isNaN(date.getTime()) ? "Invalid Date" : date.toDateString();
 }
-
-
-
 
 // Improved navigation interactivity
 function setupNavbar() {
@@ -279,9 +276,18 @@ function setupNavbar() {
 }
 // Initialize navbar interactivity
 setupNavbar();
-// Real-time updates
-onSnapshot(collection(db, "students"), (snapshot) => {
-  const students = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-  const groupedData = groupStudents(students);
-  showPrograms(groupedData);
-});
+
+// Real-time updates removed
+async function fetchAndDisplayStudents() {
+  try {
+    const studentsSnapshot = await getDocs(collection(db, "students"));
+    const students = studentsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    const groupedData = groupStudents(students);
+    showPrograms(groupedData);
+  } catch (error) {
+    console.error("Error fetching students:", error);
+  }
+}
+
+// Call the function to fetch and display students
+fetchAndDisplayStudents();

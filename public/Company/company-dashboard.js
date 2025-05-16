@@ -51,7 +51,16 @@ async function loadApplicants(companyEmail) {
     const container = document.getElementById("applicants-container");
     if (!container) return;
 
-    container.innerHTML = "";
+    container.innerHTML = ""; // Clear the container
+
+    if (querySnapshot.empty) {
+        // Display "No applicants" message if there are no applicants
+        const noApplicantsMessage = document.createElement("p");
+        noApplicantsMessage.className = "no-applicants-message";
+        noApplicantsMessage.textContent = "No applicants yet.";
+        container.appendChild(noApplicantsMessage);
+        return;
+    }
 
     querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
@@ -62,7 +71,7 @@ async function loadApplicants(companyEmail) {
 
         applicantCard.innerHTML = `
             <p><strong>Student:</strong> ${data.student_email}</p>
-            <p><strong>Resume:</strong> <a href="../../uploads/${data.resume_filename}" target="_blank">View</a></p>
+            <p><strong>Resume:</strong> <a href="../../uploaded-resume/${data.resume_filename}" target="_blank">View</a></p>
             <p><strong>Status:</strong> <span class="status-${status}">${status}</span></p>
             ${status === "pending" ? `
                 <button class="accept-btn" data-id="${docSnap.id}">Accept</button>

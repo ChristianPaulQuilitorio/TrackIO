@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Company Finder</title>
-    <link rel="stylesheet" href="student-style.css"> <!-- Link to external CSS -->
+    <link rel="stylesheet" href="navbar.css"> <!-- Link to external CSS -->
     <link rel="stylesheet" href="student-company-finder.css" /> <!-- Leaflet CSS -->
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -16,87 +16,78 @@
 </head>
 
 <body>
+    <!-- Header Section -->
     <header class="main-header">
-        <button class="burger-button" aria-label="Toggle Navigation">☰</button>
+                <button class="burger-button" aria-label="Toggle Navigation">☰</button>
         <nav class="right-header-nav">
-            <a href="#notifications"  aria-label="Notifications" id="notification-icon">
+            <a href="#notifications" class="icon-link" aria-label="Notifications" id="notification-icon">
             </a>
             <a href="student-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
+
         </nav>
     </header>
-
-
-   
-       <!-- Navigation Bar -->
+    <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="student-dashboard.html" class="nav-item" aria-label="Student Dashboard">
-            <img src="../img/home.png" alt="Student Dashboard Icon">
-            <span>Student Dashboard</span>
+        <a href="student-dashboard.html" class="nav-item">
+            <img src="../img/home.png" alt="Dashboard Icon">
+            <span>Dashboard</span>
         </a>
-        <a href="student-company-finder.html" class="nav-item" aria-label="Company Finder">
+        <a href="student-company-finder.html" class="nav-item active">
             <img src="../img/Company-Finder.png" alt="Company Finder Icon">
             <span>Company Finder</span>
         </a>
-        <a href="work-details.html" class="nav-item" aria-label="Work Details">
-            <img src="../img/Work-Details.png" alt="Work Details Icon">
-            <span>Work Details</span>
+        <a href="work-details.html" class="nav-item">
+            <img src="../img/add-hours-icon.png" alt="Add Icon">
+            <span>Add Hours</span>
         </a>
-        <a href="student-evaluation.html" class="nav-item" aria-label="evaluation">
-            <img src="../img/Work-Details.png" alt="Work Details Icon">
+        <a href="student-evaluation.html" class="nav-item">
+            <img src="../img/evaluation-icon.png" alt="Evaluation Icon">
             <span>Evaluation</span>
         </a>
-        <a href="student-documentation.html" class="nav-item" aria-label="Documentation">
+        <a href="student-documentation.html" class="nav-item">
             <img src="../img/Documentation.png" alt="Documentation Icon">
             <span>Daily Diary</span>
         </a>
-       
     </nav>
 
-    <h1>COMPANY FINDER</h1>
-<!-- Your search bar -->
-<div style="position: relative; width: 300px;">
-    <input type="text" id="search-input" placeholder="Search location or company..." style="width: 100%;margin-top: 100px; margin-left: 250px; padding: 8px;">
-    <ul id="suggestions" style="list-style:none; padding:0; margin:0; border:1px solid #ccc;margin-left: 250px; position:absolute; width:100%; background:white; max-height:150px; overflow-y:auto; display:none; z-index:1000;"></ul>
-  </div>
-  
-  <!-- Div for the map -->
-  <div id="map"></div>
-  
-  <div id="accepted-company-card" class="company-card" style="display: none;">
-    <img id="accepted-company-logo" class="company-logo" src="" alt="Company Logo">
-    <div class="company-info">
-      <h2 id="accepted-company-name"></h2>
-      <p><strong>Email:</strong> <span id="accepted-company-email"></span></p>
-      <p><strong>Address:</strong> <span id="accepted-company-address"></span></p>
-      <button id="view-company-details">View Details</button>
+    <!-- Search Bar -->
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Search location or company...">
+        <ul id="suggestions"></ul>
     </div>
-  </div>
-  
-  
-            <!-- 👇 NEW: Companies List -->
-            <div id="companies-list" class="companies-list">
-                <!-- Company cards will be dynamically inserted here -->
-            </div>
-        
 
-<!-- Company Modal -->
-<div id="company-modal" class="company-modal hidden">
+    <!-- Map Section -->
+    <h2 class="map-title">Company Locations</h2>
+    <div id="map"></div>
+
+    <!-- Companies List -->
+    <div id="companies-list" class="companies-list">
+        <!-- Company cards will be dynamically inserted here -->
+    </div>
+
+    <!-- Modals -->
+ <div id="company-modal" class="company-modal hidden">
     <div class="modal-content">
         <span id="close-modal" class="close-btn">&times;</span>
         <div class="modal-header">
-            <h2 id="company-name"></h2>
-            <p id="company-type"></p>
+            <img id="company-logo" class="modal-logo" alt="Company Logo">
+            <div class="company-header-details">
+                <h2 id="company-name"></h2>
+                <p id="company-type"></p>
+            </div>
         </div>
         <div class="modal-body">
-            <img id="company-logo" class="modal-logo" alt="Company Logo">
             <p id="company-description"></p>
             <p><strong>Contact Email:</strong> <span id="company-email"></span></p>
             <p><strong>Location:</strong> <span id="company-location"></span></p>
             <p><strong>Open for OJT:</strong> <span id="company-ojt-status"></span></p>
-
-            <div id="company-business-proof"></div>
+            <div class="business-proof-container">
+                <h3>Business Proof</h3>
+                <img id="business-proof-image" class="business-proof" alt="Business Proof" style="display: none;">
+                <iframe id="business-proof-pdf" class="business-proof" style="display: none;" frameborder="0"></iframe>
+            </div>
         </div>
         <div class="modal-footer">
             <button id="apply-button-modal">Apply</button>
@@ -104,18 +95,18 @@
     </div>
 </div>
 
-<!-- Apply Modal (OUTSIDE company-modal) -->
-<div id="apply-modal" class="modal">
-    <div class="modal-content">
-        <span id="close-apply-modal" class="close">&times;</span>
-        <h2>Upload Your Resume</h2>
-        <form id="apply-form">
-            <input type="file" id="resume-input" name="resume" accept=".pdf,.doc,.docx" required>
-            <br><br>
-            <button type="submit">Submit Resume</button>
-        </form>
+    <!-- Apply Modal (OUTSIDE company-modal) -->
+    <div id="apply-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-apply-modal" class="close">&times;</span>
+            <h2>Upload Your Resume</h2>
+            <form id="apply-form">
+                <input type="file" id="resume-input" name="resume" accept=".pdf,.doc,.docx" required>
+                <br><br>
+                <button type="submit">Submit Resume</button>
+            </form>
+        </div>
     </div>
-</div>
   
     <script type="module" src="student-company-finder.js"></script> <!-- Link to external JavaScript -->
 <!-- Leaflet JS -->

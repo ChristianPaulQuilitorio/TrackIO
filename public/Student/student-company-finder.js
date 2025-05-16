@@ -159,21 +159,46 @@ function showCompanyDetails(companyId) {
             if (docSnap.exists()) {
                 const company = docSnap.data();
 
-                document.getElementById("company-name").innerText = company.name;
-                document.getElementById("company-type").innerText = company.type;
-                document.getElementById("company-description").innerText = company.description;
-                document.getElementById("company-email").innerText = company.email;
-                document.getElementById("company-location").innerText = `${company.lat}, ${company.lng}`;
-                document.getElementById("company-ojt-status").innerText = company.open_for_ojt ? "Yes" : "No";
-
+                const companyNameElement = document.getElementById("company-name");
+                const companyTypeElement = document.getElementById("company-type");
+                const companyDescriptionElement = document.getElementById("company-description");
+                const companyEmailElement = document.getElementById("company-email");
+                const companyLocationElement = document.getElementById("company-location");
+                const companyOjtStatusElement = document.getElementById("company-ojt-status");
                 const profileImage = document.getElementById("company-logo");
-                profileImage.src = `../../uploads/${company.profile_photo}`;
-                profileImage.alt = `${company.name} Logo`;
+                const businessProofImage = document.getElementById("business-proof-image");
+                const businessProofPdf = document.getElementById("business-proof-pdf");
 
-                const proofDiv = document.getElementById("company-business-proof");
-                proofDiv.innerHTML = company.business_proof
-                    ? `<a href="../../uploads/${company.business_proof}" target="_blank">View Proof of Business</a>`
-                    : `<p>No proof of business available.</p>`;
+                // Set company details
+                if (companyNameElement) companyNameElement.innerText = company.name;
+                if (companyTypeElement) companyTypeElement.innerText = company.type;
+                if (companyDescriptionElement) companyDescriptionElement.innerText = company.description;
+                if (companyEmailElement) companyEmailElement.innerText = company.email;
+                if (companyLocationElement) companyLocationElement.innerText = `${company.lat}, ${company.lng}`;
+                if (companyOjtStatusElement) companyOjtStatusElement.innerText = company.open_for_ojt ? "Yes" : "No";
+
+                if (profileImage) {
+                    profileImage.src = `../../uploads/${company.profile_photo}`;
+                    profileImage.alt = `${company.name} Logo`;
+                }
+
+                // Handle business proof (image or PDF)
+                if (company.business_proof) {
+                    const fileExtension = company.business_proof.split('.').pop().toLowerCase();
+
+                    if (fileExtension === "pdf") {
+                        businessProofPdf.src = `../../uploads/${company.business_proof}`;
+                        businessProofPdf.style.display = "block";
+                        businessProofImage.style.display = "none";
+                    } else {
+                        businessProofImage.src = `../../uploads/${company.business_proof}`;
+                        businessProofImage.style.display = "block";
+                        businessProofPdf.style.display = "none";
+                    }
+                } else {
+                    businessProofImage.style.display = "none";
+                    businessProofPdf.style.display = "none";
+                }
 
                 openModal(modal);
             } else {
@@ -396,5 +421,36 @@ onAuthStateChanged(auth, async (user) => {
         console.log("User is not logged in.");
     }
 });
+
+// --- Company Modal HTML ---
+const companyModalHTML = `
+<div id="company-modal" class="company-modal hidden">
+    <div class="modal-content">
+        <span id="close-modal" class="close-btn">&times;</span>
+        <div class="modal-header">
+            <h2 id="company-name"></h2>
+            <p id="company-type"></p>
+        </div>
+        <div class="modal-body">
+            <img id="company-logo" class="modal-logo" alt="Company Logo">
+            <p id="company-description"></p>
+            <p><strong>Contact Email:</strong> <span id="company-email"></span></p>
+            <p><strong>Location:</strong> <span id="company-location"></span></p>
+            <p><strong>Open for OJT:</strong> <span id="company-ojt-status"></span></p>
+            <div class="business-proof-container">
+                <h3>Business Proof</h3>
+                <img id="business-proof-image" class="business-proof" alt="Business Proof" style="display: none;">
+                <iframe id="business-proof-pdf" class="business-proof" style="display: none;" width="100%" height="500px"></iframe>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="apply-button-modal">Apply</button>
+        </div>
+    </div>
+</div>
+`;
+
+// Append the modal HTML to the document body
+document.body.insertAdjacentHTML('beforeend', companyModalHTML);
 
 

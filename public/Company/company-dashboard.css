@@ -1,5 +1,23 @@
+/* General Styling */
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background: linear-gradient(to bottom, #ffffff 80%, #b3e5fc); /* 80% white, 20% light blue/cyan */    color: #333;
+}
+
+/* Adjust content for desktop mode */
+@media (min-width: 1024px) {
+    .dashboard-content {
+        margin-left: 270px; /* Adjust based on the width of your navbar */
+        padding: 20px;
+    }
+}
+
+/* OJT Applicants Section */
 #ojt-applicants-section {
-    margin-top: 2rem;
+    margin-top: 4rem;
 }
 
 .applicants-list {
@@ -47,4 +65,16 @@
 .status-pending {
     color: orange;
     font-weight: bold;
+}
+
+/* No Applicants Message */
+.no-applicants-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh; /* Adjust height to center vertically */
+    font-size: 1.5rem; /* Make the text larger */
+    color: #888;
+    font-weight: bold;
+    text-align: center;
 }

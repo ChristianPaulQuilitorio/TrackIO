@@ -4,33 +4,44 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Company Profile</title>
-  <link rel="stylesheet" href="../styles.css" />
-  <link rel="stylesheet" href="company-style.css" />
   <link rel="stylesheet" href="company-profile-style.css" />
+  <link rel="stylesheet" href="navbar.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  
   <script type="module" src="company-profile.js" defer></script>
 </head>
 <body>
-  <header class="main-header">
-    <button class="burger-button" aria-label="Toggle Navigation">☰</button>
-    <nav class="right-header-nav">
-     
-      <a href="company-profile.html" class="icon-link" aria-label="Profile">
-        <img src="../img/profile.png" alt="Profile Icon" />
-      </a>
       
-    </nav>
-  </header>
+    <!-- Header -->
+    <header class="main-header">
+        <button class="burger-button" aria-label="Toggle Navigation">☰</button>
+        <nav class="right-header-nav">
+            
+            <a href="company-profile.html" class="icon-link" aria-label="Profile">
+                <img src="../img/profile.png" alt="Profile Icon">
+            </a>
+            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button>
+        </nav>
+    </header>
 
-  <nav class="navbar">
-     <a href="company-dashboard.html" class="nav-item" aria-label="Company Dashboard">
-            <img src="../img/Company-Finder.png" alt="Company Finder Icon">
+    <!-- Notification Pop-Up -->
+    <div class="notification-popup hidden" id="notification-popup"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="company-dashboard.html" class="nav-item" aria-label="Company Dashboard">
+            <img src="../img/applicant.png" alt="Company Dashboard">
             <span>Applicants</span>
         </a>
-  
-  </nav>
+
+        <a href="company-evaluation.html" class="nav-item" aria-label="Company Dashboard">
+            <img src="../img/evaluation-icon.png" alt="Company Finder Icon">
+            <span>Evaluate Student</span>
+        </a>
+        
+            
+    </nav>
+
 
   <main class="profile-container">
     <!-- Profile Section -->
@@ -82,5 +93,41 @@
       <button id="editProfile" style="display: none;">Edit</button>
     </div>
   </main>
+  <script>
+    
+// Improved navigation interactivity
+function setupNavbar() {
+    const navbarLinks = document.querySelectorAll('.navbar a');
+    const burgerButton = document.querySelector('.burger-button');
+    const navbar = document.querySelector('.navbar');
+
+    navbarLinks.forEach(link => {
+        link.addEventListener('click', event => {
+            console.log(`Navigating to: ${event.target.getAttribute('href')}`);
+        });
+    });
+
+    burgerButton.addEventListener('click', event => {
+        navbar.classList.toggle('visible');
+        event.stopPropagation();
+    });
+
+    document.addEventListener('click', event => {
+        if (!navbar.contains(event.target) && !burgerButton.contains(event.target)) {
+            navbar.classList.remove('visible');
+        }
+    });
+}
+
+// Initialize navbar interactivity
+setupNavbar();
+
+// Example: Add interactivity to the navigation bar
+document.addEventListener('DOMContentLoaded', () => {
+    const notificationIcon = document.getElementById('notification-icon');
+    const notificationPopup = document.getElementById('notification-popup');
+});
+
+  </script>
 </body>
 </html>

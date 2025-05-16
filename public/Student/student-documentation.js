@@ -65,6 +65,7 @@ onAuthStateChanged(auth, async (user) => {
             meta.innerHTML = `🕒 Time-in: ${checkInTime} | 🕒 Time-out: ${checkOutTime}`;
 
             const addBtn = document.createElement("button");
+            addBtn.className = "add-btn";
             addBtn.textContent = existingReport ? "✏️ Edit Report" : "➕ Add Report";
 
             const textarea = document.createElement("textarea");
