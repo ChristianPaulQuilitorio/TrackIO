@@ -17,6 +17,7 @@ body {
     border: 1px solid #ccc;
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    margin-left: 250px;
 }
 
 /* Headings */
@@ -136,7 +137,7 @@ h2, h3 {
 }
 
 /* Buttons */
-button {
+.add-button {
     padding: 0.5rem 1rem;
     margin: 0.5rem;
     cursor: pointer;
@@ -159,6 +160,7 @@ button:hover {
     .evaluation-form {
         padding: 1.5rem;
         max-width: 100%; /* Full width for smaller screens */
+        margin-left: 0;
     }
 
     .info-table td, .criteria-table th, .criteria-table td {
@@ -185,7 +187,7 @@ button:hover {
         gap: 0.5rem;
     }
 
-    button {
+    .add-button {
         width: 100%; /* Full width buttons for smaller screens */
     }
 }

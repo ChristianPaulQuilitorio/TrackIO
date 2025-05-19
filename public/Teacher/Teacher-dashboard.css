@@ -1,10 +1,10 @@
 body {
-      margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f4f8fc;
       color: #0d2c54;
       font-size: 14px;
+      margin-left: 300px;
     }
 
     header.main-header {
@@ -215,6 +215,9 @@ body {
 
 /* Responsive styling for mobile and tablet */
 @media (max-width: 768px) {
+    body {
+        margin-left: 0; /* Remove left margin for mobile */
+    }
     .burger-button {
         display: block; /* Show the burger button */
     }

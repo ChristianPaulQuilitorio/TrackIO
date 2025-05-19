@@ -1,3 +1,7 @@
+body{
+    margin-left: 200px;
+  }
+
 .profile-container {
     padding: 20px;
     max-width: 1000px;
@@ -124,4 +128,10 @@
   .save-profile button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
+  }
+
+  @media (max-width: 768px){
+    body{
+      margin-left: 0;
+    }
   }

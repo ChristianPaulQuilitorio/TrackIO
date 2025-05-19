@@ -6,6 +6,7 @@ body {
     background: linear-gradient(to bottom, #ffffff 80%, #b3e5fc); /* 80% white, 20% light blue/cyan */
     color: #333;
     height: 100vh; /* Ensure the body takes full height */
+    margin-left: 200px;
 }
 
 /* Welcome Section */
@@ -73,4 +74,10 @@ body {
 
 .remaining-hours button:hover {
     background-color: #0056b3;
+}
+
+@media (max-width: 768px) {
+    body{
+        margin-left: 0;
+    }
 }

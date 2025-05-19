@@ -99,6 +99,7 @@ if (!evaluationSnap.empty) {
         selectedCompanyEmail = savedCompanyEmail;
         document.getElementById("company-search").value = savedCompanyName;
         document.getElementById("company-confirmed-name").textContent = savedCompanyName;
+        document.getElementById("company-confirmed-name").value = savedCompanyName;
     }
 
     // Refill saved input data
@@ -144,7 +145,7 @@ suggestion.addEventListener("click", async () => {
     selectedCompanyEmail = docSnap.id;
     const selectedCompanyName = company.name;
 
-    document.getElementById("company-confirmed-name").textContent = selectedCompanyName;
+    document.getElementById("company-confirmed-name").value = selectedCompanyName;
     suggestionsContainer.innerHTML = "";
     companySearchInput.value = selectedCompanyName;
 
@@ -222,5 +223,57 @@ suggestion.addEventListener("click", async () => {
         }
     } catch (err) {
         console.error("Failed to fetch student profile or evaluation data:", err);
+    }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const savePdfBtn = document.getElementById("save-pdf-btn");
+    if (savePdfBtn) {
+        savePdfBtn.addEventListener("click", async function () {
+            const evaluationSection = document.querySelector('.evaluation-section');
+            if (!evaluationSection) return;
+
+            // Hide the Save as PDF and Submit buttons before capture
+            savePdfBtn.style.display = 'none';
+            const submitBtn = document.getElementById("submit-evaluation-button");
+            if (submitBtn) submitBtn.style.display = 'none';
+
+            // Create a temporary wrapper with fixed A4 width
+            const wrapper = document.createElement('div');
+            wrapper.style.width = '794px'; // A4 width at 96dpi
+            wrapper.style.background = '#fff';
+            wrapper.style.padding = '24px';
+            wrapper.style.boxSizing = 'border-box';
+            wrapper.style.margin = '0 auto';
+
+            // Clone the section and append to wrapper
+            const clone = evaluationSection.cloneNode(true);
+            wrapper.appendChild(clone);
+
+            // Add wrapper to body (off-screen)
+            wrapper.style.position = 'absolute';
+            wrapper.style.left = '-9999px';
+            document.body.appendChild(wrapper);
+
+            // Use html2canvas to capture the wrapper
+            await html2canvas(wrapper, { scale: 2, useCORS: true }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new window.jspdf.jsPDF('p', 'pt', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = pageWidth - 40;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
+                pdf.save('student-evaluation.pdf');
+            });
+
+            // Remove the wrapper after capture
+            document.body.removeChild(wrapper);
+
+            // Show the buttons again
+            savePdfBtn.style.display = '';
+            if (submitBtn) submitBtn.style.display = '';
+        });
     }
 });

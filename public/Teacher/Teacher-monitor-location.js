@@ -216,7 +216,7 @@ function autoRefreshMap() {
     setInterval(async () => {
         console.log("Refreshing map data...");
         await loadCompaniesAndStudents(); // Reload companies and students
-    }, 5000); // Refresh every 5 seconds
+    }, 10000); // Refresh every 5 seconds
 }
 
 loadCompaniesAndStudents();

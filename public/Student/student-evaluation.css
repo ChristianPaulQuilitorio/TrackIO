@@ -119,7 +119,7 @@ body {
 /* Evaluation Info */
 .evaluation-info {
     margin-bottom: 20px;
-    text-align: center;
+    text-align: left;
 }
 
 .evaluation-info h2 {

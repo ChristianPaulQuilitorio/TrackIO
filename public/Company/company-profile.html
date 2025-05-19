@@ -8,10 +8,11 @@
   <link rel="stylesheet" href="navbar.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  
   <script type="module" src="company-profile.js" defer></script>
 </head>
 <body>
-      
+   
     <!-- Header -->
     <header class="main-header">
         <button class="burger-button" aria-label="Toggle Navigation">☰</button>
@@ -20,7 +21,7 @@
             <a href="company-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
-            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button>
+            
         </nav>
     </header>
 
@@ -38,9 +39,9 @@
             <img src="../img/evaluation-icon.png" alt="Company Finder Icon">
             <span>Evaluate Student</span>
         </a>
-        
             
     </nav>
+  </header>
 
 
   <main class="profile-container">
@@ -93,41 +94,6 @@
       <button id="editProfile" style="display: none;">Edit</button>
     </div>
   </main>
-  <script>
-    
-// Improved navigation interactivity
-function setupNavbar() {
-    const navbarLinks = document.querySelectorAll('.navbar a');
-    const burgerButton = document.querySelector('.burger-button');
-    const navbar = document.querySelector('.navbar');
-
-    navbarLinks.forEach(link => {
-        link.addEventListener('click', event => {
-            console.log(`Navigating to: ${event.target.getAttribute('href')}`);
-        });
-    });
-
-    burgerButton.addEventListener('click', event => {
-        navbar.classList.toggle('visible');
-        event.stopPropagation();
-    });
-
-    document.addEventListener('click', event => {
-        if (!navbar.contains(event.target) && !burgerButton.contains(event.target)) {
-            navbar.classList.remove('visible');
-        }
-    });
-}
-
-// Initialize navbar interactivity
-setupNavbar();
-
-// Example: Add interactivity to the navigation bar
-document.addEventListener('DOMContentLoaded', () => {
-    const notificationIcon = document.getElementById('notification-icon');
-    const notificationPopup = document.getElementById('notification-popup');
-});
-
-  </script>
+  <script scr="navbar.js"></script>
 </body>
 </html>
