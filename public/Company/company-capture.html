@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Company Dashboard</title>
-  <link rel="stylesheet" href="company-dashboard.css" />
-  <link rel="stylesheet" href="navbar.css" />
-  
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Attendance</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="navbar.css"> <!-- Link to external CSS -->
+    <link rel="stylesheet" href="company-dashboard.css">
+    <link rel="stylesheet" href="company-capture.css"> <!-- Link to external CSS -->
 </head>
 <body>
    
@@ -18,7 +20,7 @@
             <a href="company-profile.html" class="icon-link" aria-label="Profile">
                 <img src="../img/profile.png" alt="Profile Icon">
             </a>
-            
+            <button id="logout-button" class="logout-button" aria-label="Logout">Logout</button>
         </nav>
     </header>
 
@@ -48,7 +50,18 @@
         </a>
     </nav>
 
-  <script type="module" src="navbar.js"></script> <!-- Link to external JavaScript -->
-  <script type="module" src="company-dashboard.js"></script> <!-- Link to external JavaScript -->
+    <!-- Camera QR Scanner Section -->
+<div id="qr-scanner-section" style="text-align:center; margin: 32px 0;">
+    <h2>Scan Student QR Code</h2>
+    <div id="qr-video" style="width:320px; height:240px; border:1px solid #ccc; margin:0 auto;"></div>
+    <div id="scan-result" style="margin-top: 16px; font-weight: bold;"></div>
+    <button id="start-scan-btn">Start Scanning</button>
+    <button id="stop-scan-btn" style="display:none;">Stop Scanning</button>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script type="module" src="company-capture.js"></script>
+<script src="navbar.js"></script>
+
 </body>
 </html>
